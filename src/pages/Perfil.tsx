@@ -1,0 +1,194 @@
+import { useEffect, useRef, useState } from 'react'
+import { useAuth } from '../lib/AuthContext'
+import { fetchEstadisticasJugador, subirAvatar } from '../lib/data'
+import type { EstadisticasJugador } from '../types'
+
+export default function Perfil() {
+  const { profile, session, refreshProfile } = useAuth()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [stats, setStats] = useState<EstadisticasJugador | null>(null)
+  const [subiendo, setSubiendo] = useState(false)
+  const [errorFoto, setErrorFoto] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!profile) return
+    fetchEstadisticasJugador(profile.id).then(setStats).catch(() => {})
+  }, [profile?.id])
+
+  async function handleArchivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !session?.user.id) return
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorFoto('La foto no puede superar 5 MB.')
+      return
+    }
+    setSubiendo(true)
+    setErrorFoto(null)
+    try {
+      await subirAvatar(session.user.id, file)
+      await refreshProfile()
+    } catch {
+      setErrorFoto('No se pudo subir la foto. Probá de nuevo.')
+    } finally {
+      setSubiendo(false)
+      e.target.value = ''
+    }
+  }
+
+  if (!profile) return null
+
+  const winRate = stats && stats.partidosJugados > 0
+    ? Math.round((stats.partidosGanados / stats.partidosJugados) * 100)
+    : null
+
+  return (
+    <div style={{ maxWidth: '480px', margin: '0 auto', padding: '40px 20px 60px' }}>
+
+      {/* Avatar + foto */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '36px' }}>
+        <div style={{ position: 'relative', marginBottom: '14px' }}>
+          <div
+            onClick={() => !subiendo && fileInputRef.current?.click()}
+            title="Cambiar foto"
+            style={{
+              width: '96px',
+              height: '96px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              background: profile.avatar_color,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: subiendo ? 'default' : 'pointer',
+              flexShrink: 0,
+              border: '3px solid rgba(242, 240, 230, 0.12)',
+              transition: 'border-color 0.15s',
+            }}
+          >
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.apodo}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <span style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: '32px',
+                color: 'var(--color-carbon-deep)',
+              }}>
+                {profile.dorsal}
+              </span>
+            )}
+          </div>
+
+          <button
+            onClick={() => !subiendo && fileInputRef.current?.click()}
+            disabled={subiendo}
+            title="Cambiar foto"
+            style={{
+              position: 'absolute',
+              bottom: '2px',
+              right: '2px',
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              background: 'var(--color-panel-raised)',
+              border: '2px solid var(--color-carbon)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: subiendo ? 'default' : 'pointer',
+              fontSize: '13px',
+            }}
+          >
+            {subiendo ? '⏳' : '📷'}
+          </button>
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handleArchivo}
+        />
+
+        <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '4px' }}>{profile.apodo}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            background: profile.avatar_color,
+            flexShrink: 0,
+          }} />
+          <span style={{ fontSize: '13px', color: 'var(--color-bone-dim)' }}>
+            Dorsal #{profile.dorsal}
+          </span>
+        </div>
+
+        {errorFoto && (
+          <p style={{ marginTop: '10px', fontSize: '13px', color: '#E57368', textAlign: 'center' }}>
+            {errorFoto}
+          </p>
+        )}
+        {!profile.avatar_url && !subiendo && (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="btn-ghost"
+            style={{ marginTop: '12px', padding: '6px 14px', fontSize: '12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}
+          >
+            Agregar foto
+          </button>
+        )}
+      </div>
+
+      {/* Stats */}
+      {stats ? (
+        <>
+          <p className="eyebrow" style={{ marginBottom: '12px' }}>Estadísticas</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+            <StatPanel label="Goles totales" valor={stats.goles} color="var(--color-lime)" grande />
+            <StatPanel label="Partidos jugados" valor={stats.partidosJugados} grande />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+            <StatPanel label="Ganados" valor={stats.partidosGanados} color="#F5C842" />
+            <StatPanel label="Perdidos" valor={stats.partidosPerdidos} color="#E57368" />
+          </div>
+          {stats.partidosEmpatados > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+              <StatPanel label="Empates" valor={stats.partidosEmpatados} />
+              {winRate !== null && (
+                <StatPanel label="% victorias" valor={`${winRate}%`} color="#A8B3BF" />
+              )}
+            </div>
+          )}
+          {winRate !== null && stats.partidosEmpatados === 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <StatPanel label="% victorias" valor={`${winRate}%`} color="#A8B3BF" />
+            </div>
+          )}
+        </>
+      ) : (
+        <div style={{ textAlign: 'center', color: 'var(--color-bone-dim)', padding: '20px' }}>
+          Cargando estadísticas...
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StatPanel({ label, valor, color, grande }: { label: string; valor: number | string; color?: string; grande?: boolean }) {
+  return (
+    <div className="panel" style={{ padding: '16px' }}>
+      <p style={{ fontSize: '11px', color: 'var(--color-bone-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+        {label}
+      </p>
+      <p className="stat-mono" style={{ fontSize: grande ? '32px' : '26px', color: color || 'var(--color-bone)' }}>
+        {valor}
+      </p>
+    </div>
+  )
+}
