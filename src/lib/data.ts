@@ -266,8 +266,8 @@ export async function fetchEstadisticasJugador(jugadorId: string): Promise<Estad
 
   let jugados = 0, ganados = 0, perdidos = 0, empatados = 0
 
-  ;(lineupRes.data || []).forEach((l: { equipo: string; partido: { goles_a: number; goles_b: number; estado: string } | null }) => {
-    const p = l.partido
+  ;(lineupRes.data || []).forEach((l) => {
+    const p = Array.isArray(l.partido) ? l.partido[0] : l.partido
     if (!p || p.estado !== 'finalizado') return
     jugados++
     if (p.goles_a === p.goles_b) { empatados++; return }
