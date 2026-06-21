@@ -207,13 +207,15 @@ label {
 =================================================== */
 @media (max-width: 600px) {
 
-  /* Header: logo + avatar en fila 1, nav en fila 2 */
+  /* Header: fila 1 logo+avatar, fila 2 nav */
   .header-inner {
     flex-wrap: wrap;
     height: auto !important;
     padding: 10px 16px 0 !important;
     gap: 0 !important;
   }
+  .header-app-name { display: none !important; }
+  .header-user-name { display: none !important; }
   .header-nav {
     order: 3;
     flex: none !important;
