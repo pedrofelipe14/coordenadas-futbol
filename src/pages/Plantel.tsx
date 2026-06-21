@@ -42,7 +42,6 @@ export default function Plantel() {
               jugador={j}
               goles={statsMap.get(j.id)?.goles ?? 0}
               posicion={i + 1}
-              destacar={i === 0 && (statsMap.get(j.id)?.goles ?? 0) > 0}
             />
           ))}
         </div>
