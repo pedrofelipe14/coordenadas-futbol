@@ -29,30 +29,46 @@ export default function Header() {
         height: '56px',
         gap: '20px',
       }}>
-        <Link to="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
+        {/* Logo + nombre app */}
+        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
           <img src="/logo.png" alt="Coordenadas Fútbol" style={{ height: 34, width: 'auto', display: 'block' }} />
+          <span className="header-app-name" style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 600,
+            fontSize: '15px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            color: 'var(--color-bone)',
+          }}>
+            Coordenadas Fútbol
+          </span>
         </Link>
 
+        {/* Nav */}
         <nav className="header-nav" style={{ display: 'flex', flex: 1 }}>
           <NavLink to="/home" end style={linkStyle}>Inicio</NavLink>
           <NavLink to="/partido/nuevo" style={linkStyle}>Cargar</NavLink>
           <NavLink to="/jugadores" style={linkStyle}>Plantel</NavLink>
         </nav>
 
+        {/* Perfil */}
         {profile && (
-          <Link to="/perfil" title={profile.apodo} style={{ textDecoration: 'none', flexShrink: 0 }}>
+          <Link to="/perfil" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <div style={{
-              width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden',
+              width: '30px', height: '30px', borderRadius: '50%', overflow: 'hidden',
               background: profile.avatar_color, display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: '13px',
+              justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: '12px',
               fontWeight: 700, color: 'var(--color-carbon-deep)',
-              border: '2px solid rgba(242,240,230,0.15)',
+              border: '2px solid rgba(242,240,230,0.15)', flexShrink: 0,
             }}>
               {profile.avatar_url
                 ? <img src={profile.avatar_url} alt={profile.apodo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : profile.dorsal
               }
             </div>
+            <span className="header-user-name" style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-bone)' }}>
+              {profile.apodo}
+            </span>
           </Link>
         )}
       </div>
