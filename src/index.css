@@ -214,6 +214,7 @@ label {
     padding: 10px 16px 0 !important;
     gap: 0 !important;
   }
+  .header-logo { flex: 1; }
   .header-nav {
     order: 3;
     flex: none !important;
