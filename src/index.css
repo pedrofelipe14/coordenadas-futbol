@@ -201,3 +201,39 @@ label {
   font-family: var(--font-mono);
   font-weight: 600;
 }
+
+/* ===================================================
+   RESPONSIVE — mobile
+=================================================== */
+@media (max-width: 600px) {
+
+  /* Header: 2 filas en mobile */
+  .header-inner {
+    flex-wrap: wrap;
+    height: auto !important;
+    padding: 10px 16px 0 !important;
+    gap: 0 !important;
+  }
+  .header-brand-text { display: none !important; }
+  .header-nav {
+    order: 3;
+    width: 100%;
+    border-top: 1px solid rgba(242, 240, 230, 0.08);
+    padding: 2px 0 0;
+    justify-content: space-around;
+  }
+  .header-nav a {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px !important;
+  }
+  .header-user-name { display: none !important; }
+  .header-signout { display: none !important; }
+
+  /* Filas de gol: jugador ocupa fila completa */
+  .fila-gol { flex-wrap: wrap !important; }
+  .fila-gol-jugador { flex: 1 1 100% !important; }
+
+  /* Páginas: padding horizontal más chico */
+  .page-pad { padding-left: 14px !important; padding-right: 14px !important; }
+}

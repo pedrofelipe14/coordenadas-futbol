@@ -29,7 +29,7 @@ export default function Header() {
       borderBottom: '1px solid rgba(242, 240, 230, 0.08)',
       background: 'var(--color-carbon)',
     }}>
-      <div style={{
+      <div className="header-inner" style={{
         maxWidth: '960px',
         margin: '0 auto',
         padding: '0 20px',
@@ -44,14 +44,10 @@ export default function Header() {
               <img
                 src="/logo.png"
                 alt="Coordenadas Fútbol"
-                style={{
-                  height: 38,
-                  width: 'auto',
-                  display: 'block',
-                }}
+                style={{ height: 38, width: 'auto', display: 'block' }}
               />
             </Link>
-            <div>
+            <div className="header-brand-text">
               <Link to="/" style={{ textDecoration: 'none' }}>
                 <h1 style={{ fontSize: '15px', lineHeight: 1, color: 'var(--color-bone)' }}>Coordenadas Fútbol</h1>
               </Link>
@@ -83,7 +79,7 @@ export default function Header() {
               )}
             </div>
           </div>
-          <nav style={{ display: 'flex' }}>
+          <nav className="header-nav" style={{ display: 'flex' }}>
             <NavLink to="/home" end style={linkStyle}>Inicio</NavLink>
             <NavLink to="/partido/nuevo" style={linkStyle}>Cargar</NavLink>
             <NavLink to="/jugadores" style={linkStyle}>Plantel</NavLink>
@@ -94,31 +90,23 @@ export default function Header() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Link to="/perfil" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
               <div style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                background: profile.avatar_color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: 'var(--font-display)',
-                fontSize: '12px',
-                fontWeight: 700,
-                color: 'var(--color-carbon-deep)',
-                flexShrink: 0,
+                width: '30px', height: '30px', borderRadius: '50%', overflow: 'hidden',
+                background: profile.avatar_color, display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: '12px',
+                fontWeight: 700, color: 'var(--color-carbon-deep)', flexShrink: 0,
               }}>
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt={profile.apodo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  profile.dorsal
-                )}
+                {profile.avatar_url
+                  ? <img src={profile.avatar_url} alt={profile.apodo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : profile.dorsal
+                }
               </div>
-              <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-bone)' }}>{profile.apodo}</span>
+              <span className="header-user-name" style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-bone)' }}>
+                {profile.apodo}
+              </span>
             </Link>
             <button
               onClick={signOut}
-              className="btn-ghost"
+              className="btn-ghost header-signout"
               style={{ padding: '6px 12px', fontSize: '12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}
             >
               Salir
