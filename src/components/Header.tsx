@@ -30,7 +30,7 @@ export default function Header() {
         gap: '20px',
       }}>
         {/* Logo + nombre app */}
-        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+        <Link to="/" className="header-logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
           <img src="/logo.png" alt="Coordenadas Fútbol" style={{ height: 34, width: 'auto', display: 'block' }} />
           <span className="header-app-name" style={{
             fontFamily: 'var(--font-display)',
