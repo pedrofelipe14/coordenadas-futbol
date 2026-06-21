@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { fetchEstadisticasJugador, subirAvatar } from '../lib/data'
 import type { EstadisticasJugador } from '../types'
+import { useNavigate } from 'react-router-dom'
 
 export default function Perfil() {
-  const { profile, session, refreshProfile } = useAuth()
+  const { profile, session, refreshProfile, signOut } = useAuth()
+  const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [stats, setStats] = useState<EstadisticasJugador | null>(null)
   const [subiendo, setSubiendo] = useState(false)
@@ -176,6 +178,17 @@ export default function Perfil() {
           Cargando estadísticas...
         </div>
       )}
+
+      {/* Salir */}
+      <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid rgba(242,240,230,0.08)' }}>
+        <button
+          onClick={async () => { await signOut(); navigate('/') }}
+          className="btn-ghost"
+          style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '13px' }}
+        >
+          Cerrar sesión
+        </button>
+      </div>
     </div>
   )
 }

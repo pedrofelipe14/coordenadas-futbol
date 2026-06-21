@@ -4,13 +4,23 @@ import { fetchPartidos, calcularGoleadores, agruparPorMes, etiquetaMes } from '.
 import type { PartidoCompleto } from '../types'
 import Scoreboard from '../components/Scoreboard'
 import PlayerCard from '../components/PlayerCard'
+import { useAuth } from '../lib/AuthContext'
 
 export default function Home() {
   const navigate = useNavigate()
+  const { grupo } = useAuth()
   const [partidos, setPartidos] = useState<PartidoCompleto[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [mesActivo, setMesActivo] = useState<string | null>(null)
+  const [copiado, setCopiado] = useState(false)
+
+  function copiarCodigo() {
+    if (!grupo) return
+    navigator.clipboard.writeText(grupo.codigo)
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
+  }
 
   useEffect(() => {
     cargar()
@@ -75,6 +85,32 @@ export default function Home() {
 
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 20px 60px' }}>
+
+      {/* Grupo */}
+      {grupo && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px' }}>
+          <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-bone)' }}>{grupo.nombre}</p>
+          <button
+            onClick={copiarCodigo}
+            title="Copiar código del grupo"
+            style={{
+              background: 'var(--color-panel-raised)',
+              border: '1px solid rgba(242,240,230,0.12)',
+              borderRadius: '4px',
+              padding: '2px 8px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              color: copiado ? 'var(--color-lime)' : 'var(--color-bone-dim)',
+              cursor: 'pointer',
+              transition: 'color 0.15s',
+            }}
+          >
+            {copiado ? '¡Copiado!' : grupo.codigo}
+          </button>
+        </div>
+      )}
 
       {mesesOrdenados.length > 1 && (
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '28px', paddingBottom: '4px' }}>
