@@ -277,8 +277,9 @@ export default function DetallePartido() {
             <p style={{ fontSize: '12px', color: 'var(--color-bone-dim)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>Goles</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px' }}>
               {filasGol.map((fila, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div key={idx} className="fila-gol" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <select
+                    className="fila-gol-jugador"
                     value={fila.jugador_id}
                     onChange={(e) => {
                       const jugadorId = e.target.value
