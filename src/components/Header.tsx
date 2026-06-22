@@ -49,6 +49,7 @@ export default function Header() {
           <NavLink to="/home" end style={linkStyle}>Inicio</NavLink>
           {esAdmin && <NavLink to="/partido/nuevo" style={linkStyle}>Cargar</NavLink>}
           <NavLink to="/jugadores" style={linkStyle}>Plantel</NavLink>
+          <NavLink to="/chat" style={linkStyle}>Chat</NavLink>
         </nav>
 
         {/* Perfil */}

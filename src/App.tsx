@@ -9,6 +9,7 @@ import NuevoPartido from './pages/NuevoPartido'
 import DetallePartido from './pages/DetallePartido'
 import Plantel from './pages/Plantel'
 import Perfil from './pages/Perfil'
+import Chat from './pages/Chat'
 
 const Cargando = () => (
   <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-bone-dim)' }}>
@@ -64,6 +65,7 @@ export default function App() {
               <Route path="/partido/nuevo" element={<NuevoPartido />} />
               <Route path="/partido/:id" element={<DetallePartido />} />
               <Route path="/jugadores" element={<Plantel />} />
+              <Route path="/chat" element={<Chat />} />
               <Route path="/perfil" element={<Perfil />} />
             </Route>
           </Route>

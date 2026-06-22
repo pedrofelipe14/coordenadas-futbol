@@ -203,6 +203,38 @@ label {
 }
 
 /* ===================================================
+   CHAT
+=================================================== */
+
+/* Cuando el main contiene el chat, se convierte en flex column */
+main:has(.chat-page) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chat-mensajes {
+  flex: 1;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.chat-input-bar {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(242, 240, 230, 0.08);
+  background: var(--color-carbon);
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* ===================================================
    RESPONSIVE — mobile
 =================================================== */
 @media (max-width: 600px) {
