@@ -230,8 +230,7 @@ export default function Perfil() {
             {miembros.map((m) => {
               const esSelf = m.id === profile.id
               const esCreador = m.id === grupo?.creado_por
-              const adminCount = miembros.filter((x) => x.es_admin).length
-              const puedePromover = !m.es_admin && adminCount < 2
+              const puedePromover = !m.es_admin
               const puedeDemote = m.es_admin && !esSelf && !esCreador
 
               return (

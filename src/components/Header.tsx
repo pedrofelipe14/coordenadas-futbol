@@ -2,7 +2,7 @@ import { NavLink, Link } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 
 export default function Header() {
-  const { profile } = useAuth()
+  const { profile, esAdmin } = useAuth()
 
   const linkStyle = ({ isActive }: { isActive: boolean }) => ({
     padding: '8px 14px',
@@ -66,7 +66,7 @@ export default function Header() {
                 : profile.dorsal
               }
             </div>
-            <span className="header-user-name" style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-bone)' }}>
+            <span className="header-user-name" style={{ fontSize: '14px', fontWeight: 500, color: esAdmin ? 'var(--color-lime)' : 'var(--color-bone)' }}>
               {profile.apodo}
             </span>
           </Link>
