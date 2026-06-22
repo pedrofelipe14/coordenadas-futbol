@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
-import { fetchEstadisticasJugador, fetchJugadores, subirAvatar, actualizarColor, promoverAdmin, quitarAdmin } from '../lib/data'
+import { fetchEstadisticasJugador, fetchJugadores, subirAvatar, actualizarColor, promoverAdmin, quitarAdmin, salirDeGrupo, eliminarGrupo } from '../lib/data'
 import type { EstadisticasJugador, Profile } from '../types'
 import { useNavigate } from 'react-router-dom'
 
@@ -224,7 +224,7 @@ export default function Perfil() {
         <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid rgba(242,240,230,0.08)' }}>
           <p className="eyebrow" style={{ marginBottom: '4px' }}>Administración del grupo</p>
           <p style={{ fontSize: '12px', color: 'var(--color-bone-dim)', marginBottom: '16px' }}>
-            Podés tener hasta 2 admins en el grupo.
+            podes asignar a los admins que quieras, pero ojo.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {miembros.map((m) => {
@@ -301,12 +301,47 @@ export default function Perfil() {
         </div>
       )}
 
-      {/* Salir */}
-      <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid rgba(242,240,230,0.08)' }}>
+      {/* Salir del grupo / Eliminar grupo */}
+      {grupo && session?.user.id && (
+        <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid rgba(242,240,230,0.08)' }}>
+          {profile.id === grupo.creado_por ? (
+            <button
+              onClick={async () => {
+                if (!confirm(`¿Eliminar el grupo "${grupo.nombre}"? Se borrarán todos los partidos, mensajes y datos. Esta acción no se puede deshacer.`)) return
+                try {
+                  await eliminarGrupo()
+                  await refreshProfile()
+                } catch { alert('No se pudo eliminar el grupo.') }
+              }}
+              className="btn-danger"
+              style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '13px' }}
+            >
+              Eliminar grupo
+            </button>
+          ) : (
+            <button
+              onClick={async () => {
+                if (!confirm(`¿Salir del grupo "${grupo.nombre}"? Vas a perder acceso a los datos. Podés volver a unirte con el código.`)) return
+                try {
+                  await salirDeGrupo(session.user.id!)
+                  await refreshProfile()
+                } catch { alert('No se pudo salir del grupo.') }
+              }}
+              className="btn-ghost"
+              style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '13px' }}
+            >
+              Salir del grupo
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Cerrar sesión */}
+      <div style={{ marginTop: '12px' }}>
         <button
           onClick={async () => { await signOut(); navigate('/') }}
           className="btn-ghost"
-          style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '13px' }}
+          style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '13px', opacity: 0.6 }}
         >
           Cerrar sesión
         </button>

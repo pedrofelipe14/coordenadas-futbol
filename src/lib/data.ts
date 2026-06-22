@@ -279,6 +279,19 @@ export async function fetchEstadisticasJugador(jugadorId: string): Promise<Estad
   return { goles: totalGoles, partidosJugados: jugados, partidosGanados: ganados, partidosPerdidos: perdidos, partidosEmpatados: empatados }
 }
 
+export async function salirDeGrupo(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ grupo_id: null, es_admin: false })
+    .eq('id', userId)
+  if (error) throw error
+}
+
+export async function eliminarGrupo(): Promise<void> {
+  const { error } = await supabase.rpc('eliminar_grupo')
+  if (error) throw error
+}
+
 export async function promoverAdmin(userId: string): Promise<void> {
   const { error } = await supabase.rpc('promover_admin', { p_user_id: userId })
   if (error) throw error
