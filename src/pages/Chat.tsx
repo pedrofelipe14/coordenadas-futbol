@@ -142,7 +142,7 @@ export default function Chat() {
                     <Avatar autor={m.autor} size={22} />
                     <span style={{
                       fontSize: '12px', fontWeight: 600,
-                      color: m.autor.es_admin ? 'var(--color-lime)' : 'var(--color-bone-dim)',
+                      color: m.autor.es_dev ? 'var(--color-gold)' : m.autor.es_admin ? 'var(--color-lime)' : 'var(--color-bone-dim)',
                     }}>
                       {m.autor.apodo}
                     </span>

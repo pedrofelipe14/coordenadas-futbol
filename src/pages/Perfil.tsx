@@ -253,8 +253,8 @@ export default function Perfil() {
                       {m.apodo}{esSelf ? ' (vos)' : ''}
                     </p>
                     {m.es_admin && (
-                      <p style={{ fontSize: '11px', color: 'var(--color-lime)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        {esCreador ? 'Admin · Creador' : 'Admin'}
+                      <p style={{ fontSize: '11px', color: m.es_dev ? 'var(--color-gold)' : 'var(--color-lime)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        {m.es_dev ? 'Dev' : esCreador ? 'Admin · Creador' : 'Admin'}
                       </p>
                     )}
                   </div>
