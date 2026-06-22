@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
-import { fetchEstadisticasJugador, subirAvatar } from '../lib/data'
+import { fetchEstadisticasJugador, subirAvatar, actualizarColor } from '../lib/data'
 import type { EstadisticasJugador } from '../types'
 import { useNavigate } from 'react-router-dom'
+
+const COLORES = ['#8BC53F', '#D4AF37', '#C0392B', '#2E86C1', '#B968C7', '#E67E22']
 
 export default function Perfil() {
   const { profile, session, refreshProfile, signOut } = useAuth()
@@ -11,6 +13,7 @@ export default function Perfil() {
   const [stats, setStats] = useState<EstadisticasJugador | null>(null)
   const [subiendo, setSubiendo] = useState(false)
   const [errorFoto, setErrorFoto] = useState<string | null>(null)
+  const [cambiandoColor, setCambiandoColor] = useState(false)
 
   useEffect(() => {
     if (!profile) return
@@ -145,6 +148,38 @@ export default function Perfil() {
             Agregar foto
           </button>
         )}
+
+        {/* Selector de color */}
+        <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+          {COLORES.map((c) => (
+            <button
+              key={c}
+              type="button"
+              disabled={cambiandoColor}
+              onClick={async () => {
+                if (c === profile.avatar_color || !session?.user.id) return
+                setCambiandoColor(true)
+                try {
+                  await actualizarColor(session.user.id, c)
+                  await refreshProfile()
+                } finally {
+                  setCambiandoColor(false)
+                }
+              }}
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                background: c,
+                border: profile.avatar_color === c ? '3px solid var(--color-bone)' : '3px solid transparent',
+                padding: 0,
+                cursor: cambiandoColor ? 'default' : 'pointer',
+                opacity: cambiandoColor && profile.avatar_color !== c ? 0.5 : 1,
+                transition: 'border-color 0.15s, opacity 0.15s',
+              }}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Stats */}
