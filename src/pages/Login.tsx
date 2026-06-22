@@ -15,6 +15,7 @@ export default function Login() {
   const [colorElegido, setColorElegido] = useState(COLORES_DORSAL[0])
   const [error, setError] = useState<string | null>(null)
   const [cargando, setCargando] = useState(false)
+  const [cuentaCreada, setCuentaCreada] = useState(false)
 
   async function handleEntrar(e: React.FormEvent) {
     e.preventDefault()
@@ -78,7 +79,7 @@ export default function Login() {
       return
     }
 
-    await refreshProfile()
+    setCuentaCreada(true)
     setCargando(false)
   }
 
@@ -87,6 +88,31 @@ export default function Login() {
     if (msg.includes('Password should be')) return 'La contraseña tiene que tener al menos 6 caracteres.'
     if (msg.includes('Unable to validate email')) return 'Ese mail no parece válido.'
     return 'Algo falló al crear la cuenta. Probá de nuevo.'
+  }
+
+  if (cuentaCreada) {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ textAlign: 'center', maxWidth: '360px' }}>
+          <div style={{
+            width: '72px', height: '72px', borderRadius: '50%',
+            background: colorElegido, margin: '0 auto 20px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '28px',
+            color: 'var(--color-carbon-deep)',
+          }}>
+            {dorsal}
+          </div>
+          <h2 style={{ fontSize: '26px', marginBottom: '8px' }}>¡Cuenta creada!</h2>
+          <p style={{ color: 'var(--color-bone-dim)', marginBottom: '28px', fontSize: '15px' }}>
+            Bienvenido al plantel, <span style={{ color: 'var(--color-lime)', fontWeight: 600 }}>{apodo}</span>.
+          </p>
+          <button onClick={refreshProfile} className="btn" style={{ width: '100%' }}>
+            Entrar a la cancha →
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
