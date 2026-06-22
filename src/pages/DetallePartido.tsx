@@ -43,7 +43,7 @@ function LineupColumna({ titulo, color, jugadores }: { titulo: string; color: st
         : jugadores.map((pj) => (
           <div key={pj.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <AvatarJugador jugador={pj.jugador} size={26} />
-            <span style={{ fontSize: '13px' }}>{pj.jugador.apodo}</span>
+            <span style={{ fontSize: '13px', color: pj.jugador.es_admin ? 'var(--color-lime)' : undefined }}>{pj.jugador.apodo}</span>
           </div>
         ))
       }
