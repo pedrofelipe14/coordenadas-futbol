@@ -25,7 +25,7 @@ export async function crearGrupo(nombre: string, userId: string): Promise<{ id: 
 
   const { error: errProfile } = await supabase
     .from('profiles')
-    .update({ grupo_id: id })
+    .update({ grupo_id: id, es_admin: true })
     .eq('id', userId)
 
   if (errProfile) throw errProfile
@@ -42,7 +42,7 @@ export async function unirseAGrupo(codigoInput: string, userId: string): Promise
 
   const { error: errProfile } = await supabase
     .from('profiles')
-    .update({ grupo_id: data[0].id })
+    .update({ grupo_id: data[0].id, es_admin: false })
     .eq('id', userId)
 
   if (errProfile) throw errProfile
@@ -277,6 +277,16 @@ export async function fetchEstadisticasJugador(jugadorId: string): Promise<Estad
   })
 
   return { goles: totalGoles, partidosJugados: jugados, partidosGanados: ganados, partidosPerdidos: perdidos, partidosEmpatados: empatados }
+}
+
+export async function promoverAdmin(userId: string): Promise<void> {
+  const { error } = await supabase.rpc('promover_admin', { p_user_id: userId })
+  if (error) throw error
+}
+
+export async function quitarAdmin(userId: string): Promise<void> {
+  const { error } = await supabase.rpc('quitar_admin', { p_user_id: userId })
+  if (error) throw error
 }
 
 export async function actualizarColor(userId: string, color: string): Promise<void> {

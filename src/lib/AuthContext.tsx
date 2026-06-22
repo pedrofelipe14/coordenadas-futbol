@@ -7,6 +7,7 @@ interface AuthContextValue {
   session: Session | null
   profile: Profile | null
   grupo: Grupo | null
+  esAdmin: boolean
   loading: boolean
   refreshProfile: () => Promise<void>
   signOut: () => Promise<void>
@@ -76,8 +77,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  const esAdmin = profile?.es_admin ?? false
+
   return (
-    <AuthContext.Provider value={{ session, profile, grupo, loading, refreshProfile, signOut }}>
+    <AuthContext.Provider value={{ session, profile, grupo, esAdmin, loading, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   )

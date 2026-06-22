@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { fetchPartido, fetchJugadores, cerrarPartido, borrarPartido, updateJugadaUrl } from '../lib/data'
+import { useAuth } from '../lib/AuthContext'
 import type { PartidoDetalle, PartidoJugadorConPerfil, Profile } from '../types'
 
 const NOMBRES_MES = [
@@ -56,6 +57,7 @@ interface FilaJugada { descripcion: string; jugador_id: string; minuto: string; 
 export default function DetallePartido() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { esAdmin } = useAuth()
   const [partido, setPartido] = useState<PartidoDetalle | null>(null)
   const [jugadores, setJugadores] = useState<Profile[]>([])
   const [cargando, setCargando] = useState(true)
@@ -237,14 +239,20 @@ export default function DetallePartido() {
           <p style={{ fontSize: '14px', color: 'var(--color-bone-dim)', marginBottom: '16px' }}>
             Cerrá el partido cuando termine para cargar el resultado y los goles.
           </p>
-          <button onClick={() => setCerrando(true)} className="btn" style={{ width: '100%' }}>
-            Cerrar partido →
-          </button>
+          {esAdmin ? (
+            <button onClick={() => setCerrando(true)} className="btn" style={{ width: '100%' }}>
+              Cerrar partido →
+            </button>
+          ) : (
+            <p style={{ fontSize: '13px', color: 'var(--color-bone-dim)', fontStyle: 'italic' }}>
+              Solo un admin puede cerrar el partido.
+            </p>
+          )}
         </div>
       )}
 
       {/* --------- FORMULARIO DE CIERRE --------- */}
-      {partido.estado === 'en_curso' && cerrando && (
+      {partido.estado === 'en_curso' && cerrando && esAdmin && (
         <form onSubmit={handleCerrar} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <p className="eyebrow">Sección 2 · Cerrar partido</p>
@@ -392,7 +400,9 @@ export default function DetallePartido() {
           {partido.jugadas.length > 0 && (
             <div style={{ marginBottom: '20px' }}>
               <p className="eyebrow" style={{ marginBottom: '2px' }}>Jugadas épicas</p>
-              <p style={{ fontSize: '11px', color: 'var(--color-bone-dim)', marginBottom: '12px', opacity: 0.6 }}>Momentos inolvidables · hacé click para editar el link</p>
+              <p style={{ fontSize: '11px', color: 'var(--color-bone-dim)', marginBottom: '12px', opacity: 0.6 }}>
+                {esAdmin ? 'Momentos inolvidables · hacé click para editar el link' : 'Momentos inolvidables'}
+              </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {partido.jugadas.map((j) => {
                   const editando = jugadaEditando === j.id
@@ -402,11 +412,11 @@ export default function DetallePartido() {
                       className="panel"
                       style={{
                         padding: '14px 16px',
-                        cursor: editando ? 'default' : 'pointer',
+                        cursor: editando ? 'default' : esAdmin ? 'pointer' : 'default',
                         borderColor: editando ? 'rgba(139,197,63,0.35)' : undefined,
                         transition: 'border-color 0.15s',
                       }}
-                      onClick={!editando ? () => abrirEdicionJugada(j.id, j.url) : undefined}
+                      onClick={!editando && esAdmin ? () => abrirEdicionJugada(j.id, j.url) : undefined}
                     >
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                         {j.minuto != null && (
@@ -504,10 +514,12 @@ export default function DetallePartido() {
             </div>
           )}
 
-          <button onClick={handleBorrar} disabled={borrando} className="btn-danger"
-            style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '13px' }}>
-            {borrando ? 'Eliminando...' : 'Eliminar partido'}
-          </button>
+          {esAdmin && (
+            <button onClick={handleBorrar} disabled={borrando} className="btn-danger"
+              style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '13px' }}>
+              {borrando ? 'Eliminando...' : 'Eliminar partido'}
+            </button>
+          )}
         </>
       )}
     </div>

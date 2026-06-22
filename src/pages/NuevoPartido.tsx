@@ -27,7 +27,22 @@ function AvatarJugador({ jugador, size = 32 }: { jugador: Profile; size?: number
 
 export default function NuevoPartido() {
   const navigate = useNavigate()
-  const { profile } = useAuth()
+  const { profile, esAdmin } = useAuth()
+
+  if (!esAdmin) {
+    return (
+      <div style={{ maxWidth: '480px', margin: '80px auto', padding: '0 20px', textAlign: 'center' }}>
+        <p className="eyebrow" style={{ marginBottom: '8px' }}>Acceso restringido</p>
+        <h2 style={{ fontSize: '20px', marginBottom: '12px' }}>Solo los admins pueden cargar partidos</h2>
+        <p style={{ color: 'var(--color-bone-dim)', marginBottom: '24px', fontSize: '14px' }}>
+          Pedile a un admin del grupo que te dé permiso desde su perfil.
+        </p>
+        <button onClick={() => navigate('/home')} className="btn-ghost" style={{ padding: '10px 20px', borderRadius: 'var(--radius)' }}>
+          Volver al inicio
+        </button>
+      </div>
+    )
+  }
 
   const [jugadores, setJugadores] = useState<Profile[]>([])
   const [lugar, setLugar] = useState('')
