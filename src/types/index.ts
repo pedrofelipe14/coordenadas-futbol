@@ -13,6 +13,7 @@ export interface Profile {
   avatar_color: string
   avatar_url: string | null
   grupo_id: string | null
+  es_admin: boolean
   created_at: string
 }
 
