@@ -14,6 +14,7 @@ export interface Profile {
   avatar_url: string | null
   grupo_id: string | null
   es_admin: boolean
+  es_dev: boolean
   created_at: string
 }
 

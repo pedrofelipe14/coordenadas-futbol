@@ -67,7 +67,7 @@ export default function Header() {
                 : profile.dorsal
               }
             </div>
-            <span className="header-user-name" style={{ fontSize: '14px', fontWeight: 500, color: esAdmin ? 'var(--color-lime)' : 'var(--color-bone)' }}>
+            <span className="header-user-name" style={{ fontSize: '14px', fontWeight: 500, color: profile.es_dev ? 'var(--color-gold)' : esAdmin ? 'var(--color-lime)' : 'var(--color-bone)' }}>
               {profile.apodo}
             </span>
           </Link>

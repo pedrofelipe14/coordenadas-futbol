@@ -66,7 +66,7 @@ export default function PlayerCard({ jugador, goles, posicion }: Props) {
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontWeight: 500, fontSize: '15px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: jugador.es_admin ? 'var(--color-lime)' : undefined }}>
+        <p style={{ fontWeight: 500, fontSize: '15px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: jugador.es_dev ? 'var(--color-gold)' : jugador.es_admin ? 'var(--color-lime)' : undefined }}>
           {jugador.apodo}
         </p>
       </div>

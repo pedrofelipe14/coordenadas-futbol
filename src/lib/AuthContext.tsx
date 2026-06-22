@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
-  const esAdmin = profile?.es_admin ?? false
+  const esAdmin = (profile?.es_admin || profile?.es_dev) ?? false
 
   return (
     <AuthContext.Provider value={{ session, profile, grupo, esAdmin, loading, refreshProfile, signOut }}>
