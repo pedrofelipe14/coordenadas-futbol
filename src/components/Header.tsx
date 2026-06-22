@@ -1,5 +1,6 @@
 import { NavLink, Link } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
+import DevBadge from './DevBadge'
 
 export default function Header() {
   const { profile, esAdmin } = useAuth()
@@ -70,6 +71,7 @@ export default function Header() {
             <span className="header-user-name" style={{ fontSize: '14px', fontWeight: 500, color: profile.es_dev ? 'var(--color-gold)' : esAdmin ? 'var(--color-lime)' : 'var(--color-bone)' }}>
               {profile.apodo}
             </span>
+            {profile.es_dev && <DevBadge />}
           </Link>
         )}
       </div>
