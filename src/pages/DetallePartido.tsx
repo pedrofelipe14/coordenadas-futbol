@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { fetchPartido, fetchJugadores, cerrarPartido, borrarPartido, updateJugadaUrl } from '../lib/data'
 import { useAuth } from '../lib/AuthContext'
 import type { PartidoDetalle, PartidoJugadorConPerfil, Profile } from '../types'
+import DevBadge from '../components/DevBadge'
 
 const NOMBRES_MES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -44,6 +45,7 @@ function LineupColumna({ titulo, color, jugadores }: { titulo: string; color: st
           <div key={pj.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <AvatarJugador jugador={pj.jugador} size={26} />
             <span style={{ fontSize: '13px', color: pj.jugador.es_dev ? 'var(--color-gold)' : pj.jugador.es_admin ? 'var(--color-lime)' : undefined }}>{pj.jugador.apodo}</span>
+            {pj.jugador.es_dev && <DevBadge />}
           </div>
         ))
       }

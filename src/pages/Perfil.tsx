@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { fetchEstadisticasJugador, fetchJugadores, subirAvatar, actualizarColor, promoverAdmin, quitarAdmin, salirDeGrupo, eliminarGrupo } from '../lib/data'
 import type { EstadisticasJugador, Profile } from '../types'
+import DevBadge from '../components/DevBadge'
 import { useNavigate } from 'react-router-dom'
 
 const COLORES = ['#8BC53F', '#D4AF37', '#C0392B', '#2E86C1', '#B968C7', '#E67E22']
@@ -125,7 +126,10 @@ export default function Perfil() {
           onChange={handleArchivo}
         />
 
-        <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '4px' }}>{profile.apodo}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <h2 style={{ fontSize: '22px', fontWeight: 700, color: profile.es_dev ? 'var(--color-gold)' : undefined }}>{profile.apodo}</h2>
+          {profile.es_dev && <DevBadge />}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{
             width: '12px',
@@ -249,9 +253,12 @@ export default function Perfil() {
                     }
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '14px', fontWeight: esSelf ? 600 : 400 }}>
-                      {m.apodo}{esSelf ? ' (vos)' : ''}
-                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <p style={{ fontSize: '14px', fontWeight: esSelf ? 600 : 400, color: m.es_dev ? 'var(--color-gold)' : undefined }}>
+                        {m.apodo}{esSelf ? ' (vos)' : ''}
+                      </p>
+                      {m.es_dev && <DevBadge />}
+                    </div>
                     {m.es_admin && (
                       <p style={{ fontSize: '11px', color: m.es_dev ? 'var(--color-gold)' : 'var(--color-lime)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         {m.es_dev ? 'Dev' : esCreador ? 'Admin · Creador' : 'Admin'}

@@ -3,6 +3,7 @@ import { useAuth } from '../lib/AuthContext'
 import { fetchMensajes, fetchJugadores, enviarMensaje } from '../lib/data'
 import { supabase } from '../lib/supabase'
 import type { MensajeConAutor, Profile } from '../types'
+import DevBadge from '../components/DevBadge'
 
 function formatHora(ts: string): string {
   const d = new Date(ts)
@@ -146,6 +147,7 @@ export default function Chat() {
                     }}>
                       {m.autor.apodo}
                     </span>
+                    {m.autor.es_dev && <DevBadge />}
                   </div>
                 )}
 

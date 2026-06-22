@@ -1,4 +1,5 @@
 import type { Profile } from '../types'
+import DevBadge from './DevBadge'
 
 interface Props {
   jugador: Profile
@@ -65,10 +66,11 @@ export default function PlayerCard({ jugador, goles, posicion }: Props) {
         )}
       </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
         <p style={{ fontWeight: 500, fontSize: '15px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: jugador.es_dev ? 'var(--color-gold)' : jugador.es_admin ? 'var(--color-lime)' : undefined }}>
           {jugador.apodo}
         </p>
+        {jugador.es_dev && <DevBadge />}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
