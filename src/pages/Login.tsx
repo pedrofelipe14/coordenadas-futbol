@@ -36,8 +36,8 @@ export default function Login() {
       return
     }
     const dorsalNum = parseInt(dorsal, 10)
-    if (!dorsalNum || dorsalNum < 1 || dorsalNum > 99) {
-      setError('El dorsal tiene que ser un número entre 1 y 99.')
+    if (!dorsalNum || dorsalNum < 1 || dorsalNum > 999) {
+      setError('El dorsal tiene que ser un número entre 1 y 999.')
       return
     }
 
@@ -186,7 +186,7 @@ export default function Login() {
                     id="dorsal"
                     type="number"
                     min={1}
-                    max={99}
+                    max={999}
                     value={dorsal}
                     onChange={(e) => setDorsal(e.target.value)}
                     placeholder="10"
