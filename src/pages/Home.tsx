@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { Grupo } from '../types'
 import { useNavigate } from 'react-router-dom'
 import { fetchPartidos, calcularGoleadores, agruparPorMes, etiquetaMes } from '../lib/data'
 import type { PartidoCompleto } from '../types'
@@ -70,15 +71,18 @@ export default function Home() {
 
   if (partidos.length === 0) {
     return (
-      <div style={{ maxWidth: '480px', margin: '60px auto', padding: '0 20px', textAlign: 'center' }}>
-        <p className="eyebrow" style={{ marginBottom: '8px' }}>Temporada vacía</p>
-        <h2 style={{ fontSize: '22px', marginBottom: '12px' }}>Todavía no cargaron partidos</h2>
-        <p style={{ color: 'var(--color-bone-dim)', marginBottom: '24px' }}>
-          Arranquen anotando el primer partido del grupo.
-        </p>
-        <button onClick={() => navigate('/partido/nuevo')} className="btn">
-          Cargar primer partido
-        </button>
+      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 20px 60px' }}>
+        <GrupoHeader grupo={grupo} copiado={copiado} onCopiar={copiarCodigo} />
+        <div style={{ textAlign: 'center', marginTop: '40px' }}>
+          <p className="eyebrow" style={{ marginBottom: '8px' }}>Temporada vacía</p>
+          <h2 style={{ fontSize: '22px', marginBottom: '12px' }}>Todavía no cargaron partidos</h2>
+          <p style={{ color: 'var(--color-bone-dim)', marginBottom: '24px' }}>
+            Arranquen anotando el primer partido del grupo.
+          </p>
+          <button onClick={() => navigate('/partido/nuevo')} className="btn">
+            Cargar primer partido
+          </button>
+        </div>
       </div>
     )
   }
@@ -86,31 +90,7 @@ export default function Home() {
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 20px 60px' }}>
 
-      {/* Grupo */}
-      {grupo && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px' }}>
-          <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-bone)' }}>{grupo.nombre}</p>
-          <button
-            onClick={copiarCodigo}
-            title="Copiar código del grupo"
-            style={{
-              background: 'var(--color-panel-raised)',
-              border: '1px solid rgba(242,240,230,0.12)',
-              borderRadius: '4px',
-              padding: '2px 8px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              fontWeight: 600,
-              letterSpacing: '0.08em',
-              color: copiado ? 'var(--color-lime)' : 'var(--color-bone-dim)',
-              cursor: 'pointer',
-              transition: 'color 0.15s',
-            }}
-          >
-            {copiado ? '¡Copiado!' : grupo.codigo}
-          </button>
-        </div>
-      )}
+      <GrupoHeader grupo={grupo} copiado={copiado} onCopiar={copiarCodigo} />
 
       {mesesOrdenados.length > 1 && (
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '28px', paddingBottom: '4px' }}>
@@ -180,6 +160,34 @@ export default function Home() {
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+function GrupoHeader({ grupo, copiado, onCopiar }: { grupo: Grupo | null; copiado: boolean; onCopiar: () => void }) {
+  if (!grupo) return null
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px' }}>
+      <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-bone)' }}>{grupo.nombre}</p>
+      <button
+        onClick={onCopiar}
+        title="Copiar código del grupo"
+        style={{
+          background: 'var(--color-panel-raised)',
+          border: '1px solid rgba(242,240,230,0.12)',
+          borderRadius: '4px',
+          padding: '2px 8px',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '11px',
+          fontWeight: 600,
+          letterSpacing: '0.08em',
+          color: copiado ? 'var(--color-lime)' : 'var(--color-bone-dim)',
+          cursor: 'pointer',
+          transition: 'color 0.15s',
+        }}
+      >
+        {copiado ? '¡Copiado!' : grupo.codigo}
+      </button>
     </div>
   )
 }

@@ -279,6 +279,14 @@ export async function fetchEstadisticasJugador(jugadorId: string): Promise<Estad
   return { goles: totalGoles, partidosJugados: jugados, partidosGanados: ganados, partidosPerdidos: perdidos, partidosEmpatados: empatados }
 }
 
+export async function actualizarColor(userId: string, color: string): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ avatar_color: color })
+    .eq('id', userId)
+  if (error) throw error
+}
+
 export async function subirAvatar(userId: string, file: File): Promise<string> {
   const ext = file.name.split('.').pop() || 'jpg'
   const path = `${userId}/${Date.now()}.${ext}`
