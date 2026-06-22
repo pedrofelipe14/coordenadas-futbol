@@ -90,3 +90,15 @@ export interface GoleadorStat {
   goles: number
   partidosJugados: number
 }
+
+export interface Mensaje {
+  id: string
+  grupo_id: string
+  autor_id: string
+  contenido: string
+  created_at: string
+}
+
+export interface MensajeConAutor extends Mensaje {
+  autor: Profile | null
+}

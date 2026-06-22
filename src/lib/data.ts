@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Partido, PartidoCompleto, PartidoDetalle, GolConJugador, PartidoJugadorConPerfil, JugadaEpica, GoleadorStat, Profile, EstadisticasJugador } from '../types'
+import type { Partido, PartidoCompleto, PartidoDetalle, GolConJugador, PartidoJugadorConPerfil, JugadaEpica, GoleadorStat, Profile, EstadisticasJugador, MensajeConAutor } from '../types'
 
 const CODIGO_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
@@ -362,6 +362,33 @@ const NOMBRES_MES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ]
+
+// ----------------------------------------------------------------
+// CHAT
+// ----------------------------------------------------------------
+
+export async function fetchMensajes(grupoId: string): Promise<MensajeConAutor[]> {
+  const { data, error } = await supabase
+    .from('mensajes')
+    .select('*, autor:profiles(*)')
+    .eq('grupo_id', grupoId)
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  if (error) throw error
+
+  return ((data || []).reverse()).map((m) => ({
+    ...m,
+    autor: Array.isArray(m.autor) ? (m.autor[0] ?? null) : m.autor,
+  })) as MensajeConAutor[]
+}
+
+export async function enviarMensaje(grupoId: string, autorId: string, contenido: string): Promise<void> {
+  const { error } = await supabase
+    .from('mensajes')
+    .insert({ grupo_id: grupoId, autor_id: autorId, contenido: contenido.trim() })
+  if (error) throw error
+}
 
 export function etiquetaMes(key: string): string {
   const [anio, mes] = key.split('-')
