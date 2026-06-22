@@ -230,8 +230,9 @@ export default function Perfil() {
             {miembros.map((m) => {
               const esSelf = m.id === profile.id
               const esCreador = m.id === grupo?.creado_por
-              const puedePromover = !m.es_admin
-              const puedeDemote = m.es_admin && !esSelf && !esCreador
+              const soyCreador = profile.id === grupo?.creado_por
+              const puedePromover = soyCreador && !m.es_admin
+              const puedeDemote = soyCreador && m.es_admin && !esSelf && !esCreador
 
               return (
                 <div key={m.id} className="panel" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
