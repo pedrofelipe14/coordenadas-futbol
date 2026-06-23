@@ -6,7 +6,7 @@ import { useAuth } from '../lib/AuthContext'
 const COLORES_DORSAL = ['#8BC53F', '#D4AF37', '#C0392B', '#2E86C1', '#B968C7', '#E67E22']
 
 export default function Login() {
-  const { refreshProfile } = useAuth()
+  const { } = useAuth()
   const [modo, setModo] = useState<'entrar' | 'crear' | 'recuperar'>('entrar')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
