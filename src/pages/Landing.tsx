@@ -45,29 +45,46 @@ export default function Landing() {
       <div style={{ textAlign: 'center', marginBottom: '64px' }}>
         <img
           src="/logo.png"
-          alt="Coordenadas Fútbol"
+          alt="CoordeFutbol"
+          className="fade-up"
           style={{
             height: 120,
             width: 'auto',
             display: 'block',
             margin: '0 auto 28px',
+            animationDelay: '0s',
           }}
         />
-        <p className="eyebrow" style={{ marginBottom: '14px' }}>Tu grupo. Tus partidos.</p>
-        <h1 style={{ fontSize: '52px', lineHeight: 1.05, marginBottom: '20px' }}>
-          Coordenadas<br />Fútbol
+        <p
+          className="eyebrow fade-up"
+          style={{ marginBottom: '14px', animationDelay: '0.12s' }}
+        >
+          Tu grupo. Tus partidos.
+        </p>
+        <h1
+          className="hero-title hero-h1 fade-up"
+          style={{ lineHeight: 1.0, marginBottom: '20px', animationDelay: '0.22s' }}
+        >
+          CoordeFutbol
         </h1>
-        <p style={{
-          fontSize: '16px',
-          color: 'var(--color-bone-dim)',
-          maxWidth: '420px',
-          margin: '0 auto 40px',
-          lineHeight: 1.7,
-        }}>
+        <p
+          className="fade-up"
+          style={{
+            fontSize: '16px',
+            color: 'var(--color-bone-dim)',
+            maxWidth: '420px',
+            margin: '0 auto 40px',
+            lineHeight: 1.7,
+            animationDelay: '0.34s',
+          }}
+        >
           Registrá cada partido, seguí quién está pateando más y mirá cómo va la temporada mes a mes.
         </p>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div
+          className="fade-up"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', animationDelay: '0.46s' }}
+        >
           <Link to={loggedIn ? '/home' : '/login'} style={btnStyle}>
             {loggedIn ? 'Ir al tablero' : 'Entrar a mi grupo'}
           </Link>
@@ -89,8 +106,12 @@ export default function Landing() {
         gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
         gap: '14px',
       }}>
-        {features.map((f) => (
-          <div key={f.titulo} className="panel" style={{ padding: '24px' }}>
+        {features.map((f, i) => (
+          <div
+            key={f.titulo}
+            className="panel card-hover fade-up"
+            style={{ padding: '24px', animationDelay: `${0.52 + i * 0.1}s` }}
+          >
             <p className="eyebrow" style={{ marginBottom: '10px' }}>{f.titulo}</p>
             <p style={{ color: 'var(--color-bone-dim)', fontSize: '14px', lineHeight: 1.65 }}>
               {f.desc}

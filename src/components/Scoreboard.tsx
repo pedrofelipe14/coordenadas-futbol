@@ -22,7 +22,7 @@ export default function Scoreboard({ partido, onClick }: Props) {
   return (
     <button
       onClick={onClick}
-      className="panel"
+      className="panel card-hover"
       style={{
         display: 'flex',
         alignItems: 'stretch',
