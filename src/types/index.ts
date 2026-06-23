@@ -103,3 +103,29 @@ export interface Mensaje {
 export interface MensajeConAutor extends Mensaje {
   autor: Profile | null
 }
+
+export interface PagoCancha {
+  partido_id: string
+  jugador_id: string
+  monto: number
+  pagado: boolean
+  pagado_at: string | null
+  jugador: Profile | null
+}
+
+export interface PagoPartido {
+  partido_id: string
+  fecha: string
+  costo_cancha: number
+  pagos: PagoCancha[]
+}
+
+export interface MembresiaGrupo {
+  perfil_id: string
+  grupo_id: string
+  grupo_nombre: string
+  grupo_codigo: string
+  grupo_creado_por: string | null
+  es_admin: boolean
+  joined_at: string
+}

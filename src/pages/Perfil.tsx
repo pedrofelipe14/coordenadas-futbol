@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
-import { fetchEstadisticasJugador, fetchJugadores, subirAvatar, actualizarColor, promoverAdmin, quitarAdmin, salirDeGrupo, eliminarGrupo } from '../lib/data'
+import {
+  fetchEstadisticasJugador, fetchJugadores,
+  subirAvatar, actualizarColor,
+  promoverAdmin, quitarAdmin,
+  salirDeGrupo, eliminarGrupo,
+  cambiarGrupoActivo, unirseAGrupo,
+} from '../lib/data'
 import type { EstadisticasJugador, Profile } from '../types'
 import DevBadge from '../components/DevBadge'
 import { useNavigate } from 'react-router-dom'
@@ -8,7 +14,7 @@ import { useNavigate } from 'react-router-dom'
 const COLORES = ['#8BC53F', '#D4AF37', '#C0392B', '#2E86C1', '#B968C7', '#E67E22']
 
 export default function Perfil() {
-  const { profile, grupo, esAdmin, session, refreshProfile, signOut } = useAuth()
+  const { profile, grupo, misGrupos, esAdmin, session, refreshProfile, signOut } = useAuth()
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [stats, setStats] = useState<EstadisticasJugador | null>(null)
@@ -17,6 +23,23 @@ export default function Perfil() {
   const [cambiandoColor, setCambiandoColor] = useState(false)
   const [miembros, setMiembros] = useState<Profile[]>([])
   const [gestionando, setGestionando] = useState<string | null>(null)
+  const [mostrarUnirse, setMostrarUnirse] = useState(false)
+  const [codigoUnirse, setCodigoUnirse] = useState('')
+  const [errorUnirse, setErrorUnirse] = useState<string | null>(null)
+  const [uniendose, setUniendose] = useState(false)
+  const [copiado, setCopiado] = useState<string | null>(null)
+
+  async function handleCompartir(codigo: string, nombre: string) {
+    const url = `${window.location.origin}/grupo?codigo=${codigo}`
+    if (navigator.share) {
+      try { await navigator.share({ title: `Unite a ${nombre}`, text: 'Unite a mi equipo en CoordeFutbol', url }) }
+      catch { /* cancelado */ }
+    } else {
+      await navigator.clipboard.writeText(url)
+      setCopiado(codigo)
+      setTimeout(() => setCopiado(null), 2000)
+    }
+  }
 
   useEffect(() => {
     if (!profile) return
@@ -46,11 +69,73 @@ export default function Perfil() {
     }
   }
 
+  async function handleCambiarGrupo(grupoId: string) {
+    if (!session?.user.id) return
+    try {
+      await cambiarGrupoActivo(session.user.id, grupoId)
+      await refreshProfile()
+    } catch {
+      alert('No se pudo cambiar de grupo.')
+    }
+  }
+
+  async function handleSalirDeGrupo(grupoId: string, grupoNombre: string) {
+    if (!confirm(`¿Salir del grupo "${grupoNombre}"? Podés volver a unirte con el código.`)) return
+    if (!session?.user.id) return
+    try {
+      await salirDeGrupo(session.user.id, grupoId)
+      await refreshProfile()
+    } catch {
+      alert('No se pudo salir del grupo.')
+    }
+  }
+
+  async function handleEliminarGrupo(grupoId: string, grupoNombre: string) {
+    if (!confirm(`¿Eliminar el grupo "${grupoNombre}"? Se borrarán todos los partidos, mensajes y datos. Esta acción no se puede deshacer.`)) return
+    if (!session?.user.id) return
+    try {
+      if (profile?.grupo_id !== grupoId) {
+        await cambiarGrupoActivo(session.user.id, grupoId)
+      }
+      await eliminarGrupo()
+      await refreshProfile()
+    } catch {
+      alert('No se pudo eliminar el grupo.')
+    }
+  }
+
+  async function handleUnirseOtro(e: React.FormEvent) {
+    e.preventDefault()
+    if (!profile || !codigoUnirse.trim()) return
+    setUniendose(true)
+    setErrorUnirse(null)
+    try {
+      await unirseAGrupo(codigoUnirse, profile.id)
+      await refreshProfile()
+      setMostrarUnirse(false)
+      setCodigoUnirse('')
+    } catch (err) {
+      setErrorUnirse(err instanceof Error ? err.message : 'Código inválido. Revisá que esté bien escrito.')
+    } finally {
+      setUniendose(false)
+    }
+  }
+
   if (!profile) return null
 
   const winRate = stats && stats.partidosJugados > 0
     ? Math.round((stats.partidosGanados / stats.partidosJugados) * 100)
     : null
+
+  const btnGroupStyle: React.CSSProperties = {
+    padding: '5px 12px',
+    fontSize: '12px',
+    borderRadius: 'var(--radius)',
+    fontFamily: 'var(--font-display)',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+  }
 
   return (
     <div style={{ maxWidth: '480px', margin: '0 auto', padding: '40px 20px 60px' }}>
@@ -223,6 +308,132 @@ export default function Perfil() {
         </div>
       )}
 
+      {/* Mis grupos */}
+      <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid rgba(242,240,230,0.08)' }}>
+        <p className="eyebrow" style={{ marginBottom: '4px' }}>Mis grupos</p>
+        <p style={{ fontSize: '12px', color: 'var(--color-bone-dim)', marginBottom: '14px' }}>
+          Podés estar en hasta 2 grupos a la vez.
+        </p>
+
+        {misGrupos.length === 0 ? (
+          <p style={{ fontSize: '13px', color: 'var(--color-bone-dim)' }}>No pertenecés a ningún grupo.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {misGrupos.map((g) => {
+              const esActivo = g.grupo_id === profile.grupo_id
+              const esCreadorDeEste = g.grupo_creado_por === profile.id
+              return (
+                <div
+                  key={g.grupo_id}
+                  className="panel"
+                  style={{ padding: '14px 16px', borderColor: esActivo ? 'rgba(139,197,63,0.3)' : undefined }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '15px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {g.grupo_nombre}
+                      </p>
+                      {esActivo ? (
+                        <p style={{ fontSize: '11px', color: 'var(--color-lime)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Activo
+                        </p>
+                      ) : g.es_admin ? (
+                        <p style={{ fontSize: '11px', color: 'var(--color-bone-dim)' }}>Admin</p>
+                      ) : null}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                      <button
+                        onClick={() => handleCompartir(g.grupo_codigo, g.grupo_nombre)}
+                        className="btn-ghost"
+                        style={{ ...btnGroupStyle, color: copiado === g.grupo_codigo ? 'var(--color-lime)' : undefined }}
+                      >
+                        {copiado === g.grupo_codigo ? 'Copiado ✓' : 'Compartir'}
+                      </button>
+                      {!esActivo && (
+                        <button
+                          onClick={() => handleCambiarGrupo(g.grupo_id)}
+                          className="btn-ghost"
+                          style={btnGroupStyle}
+                        >
+                          Cambiar
+                        </button>
+                      )}
+                      {esCreadorDeEste ? (
+                        <button
+                          onClick={() => handleEliminarGrupo(g.grupo_id, g.grupo_nombre)}
+                          className="btn-ghost"
+                          style={{ ...btnGroupStyle, color: '#E57368', borderColor: 'rgba(229,115,104,0.3)' }}
+                        >
+                          Eliminar
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleSalirDeGrupo(g.grupo_id, g.grupo_nombre)}
+                          className="btn-ghost"
+                          style={{ ...btnGroupStyle, color: '#E57368', borderColor: 'rgba(229,115,104,0.3)' }}
+                        >
+                          Salir
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Unirse a otro grupo */}
+        {misGrupos.length < 2 && (
+          <div style={{ marginTop: '12px' }}>
+            {!mostrarUnirse ? (
+              <button
+                onClick={() => setMostrarUnirse(true)}
+                className="btn-ghost"
+                style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '13px' }}
+              >
+                + Unirme a otro equipo
+              </button>
+            ) : (
+              <form
+                onSubmit={handleUnirseOtro}
+                className="panel"
+                style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}
+              >
+                <div>
+                  <label htmlFor="codigoUnirse">Código del equipo</label>
+                  <input
+                    id="codigoUnirse"
+                    type="text"
+                    value={codigoUnirse}
+                    onChange={(e) => setCodigoUnirse(e.target.value.toUpperCase())}
+                    placeholder="Ej: A3BK7R"
+                    maxLength={6}
+                    style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', fontSize: '18px' }}
+                    required
+                  />
+                </div>
+                {errorUnirse && <p style={{ color: '#E57368', fontSize: '13px' }}>{errorUnirse}</p>}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="submit" className="btn" disabled={uniendose} style={{ flex: 1 }}>
+                    {uniendose ? 'Uniéndome...' : 'Unirme'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setMostrarUnirse(false); setCodigoUnirse(''); setErrorUnirse(null) }}
+                    className="btn-ghost"
+                    style={{ padding: '10px 16px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '13px' }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Panel de admin */}
       {esAdmin && miembros.length > 0 && (
         <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid rgba(242,240,230,0.08)' }}>
@@ -308,43 +519,8 @@ export default function Perfil() {
         </div>
       )}
 
-      {/* Salir del grupo / Eliminar grupo */}
-      {grupo && session?.user.id && (
-        <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid rgba(242,240,230,0.08)' }}>
-          {profile.id === grupo.creado_por ? (
-            <button
-              onClick={async () => {
-                if (!confirm(`¿Eliminar el grupo "${grupo.nombre}"? Se borrarán todos los partidos, mensajes y datos. Esta acción no se puede deshacer.`)) return
-                try {
-                  await eliminarGrupo()
-                  await refreshProfile()
-                } catch { alert('No se pudo eliminar el grupo.') }
-              }}
-              className="btn-danger"
-              style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '13px' }}
-            >
-              Eliminar grupo
-            </button>
-          ) : (
-            <button
-              onClick={async () => {
-                if (!confirm(`¿Salir del grupo "${grupo.nombre}"? Vas a perder acceso a los datos. Podés volver a unirte con el código.`)) return
-                try {
-                  await salirDeGrupo(session.user.id!)
-                  await refreshProfile()
-                } catch { alert('No se pudo salir del grupo.') }
-              }}
-              className="btn-ghost"
-              style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '13px' }}
-            >
-              Salir del grupo
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Cerrar sesión */}
-      <div style={{ marginTop: '12px' }}>
+      <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid rgba(242,240,230,0.08)' }}>
         <button
           onClick={async () => { await signOut(); navigate('/') }}
           className="btn-ghost"

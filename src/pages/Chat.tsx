@@ -1,215 +1,198 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
-import { fetchMensajes, fetchJugadores, enviarMensaje } from '../lib/data'
+import { fetchPagoActivo, marcarPagado } from '../lib/data'
 import { supabase } from '../lib/supabase'
-import type { MensajeConAutor, Profile } from '../types'
-import DevBadge from '../components/DevBadge'
+import type { PagoPartido } from '../types'
 
-function formatHora(ts: string): string {
-  const d = new Date(ts)
-  const hoy = new Date()
-  const esHoy = d.toDateString() === hoy.toDateString()
-  if (esHoy) {
-    return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-  }
-  return (
-    d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }) +
-    ' ' +
-    d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-  )
-}
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
 
-function Avatar({ autor, size = 28 }: { autor: Profile; size?: number }) {
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: autor.avatar_color, overflow: 'hidden',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'var(--font-display)', fontWeight: 700,
-      fontSize: size * 0.36, color: 'var(--color-carbon-deep)',
-    }}>
-      {autor.avatar_url
-        ? <img src={autor.avatar_url} alt={autor.apodo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        : autor.dorsal
-      }
-    </div>
-  )
+function formatFechaPago(fecha: string): string {
+  const [, mes, dia] = fecha.split('-')
+  return `${parseInt(dia)} ${MESES[parseInt(mes) - 1]}`
 }
 
 export default function Chat() {
   const { profile, grupo } = useAuth()
-  const [mensajes, setMensajes] = useState<MensajeConAutor[]>([])
-  const [texto, setTexto] = useState('')
-  const [enviando, setEnviando] = useState(false)
+  const [pagoActivo, setPagoActivo] = useState<PagoPartido | null>(null)
   const [cargando, setCargando] = useState(true)
-  const bottomRef = useRef<HTMLDivElement>(null)
-  const perfilesRef = useRef<Map<string, Profile>>(new Map())
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [pagando, setPagando] = useState(false)
 
   useEffect(() => {
     if (!grupo) return
 
-    async function init() {
-      const [msgs, jugadores] = await Promise.all([
-        fetchMensajes(grupo!.id),
-        fetchJugadores(),
-      ])
-      const map = new Map<string, Profile>()
-      jugadores.forEach((j) => map.set(j.id, j))
-      perfilesRef.current = map
-      setMensajes(msgs)
-      setCargando(false)
-    }
-
-    init()
+    fetchPagoActivo()
+      .then(setPagoActivo)
+      .catch(() => setPagoActivo(null))
+      .finally(() => setCargando(false))
 
     const channel = supabase
-      .channel(`chat-${grupo.id}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'mensajes', filter: `grupo_id=eq.${grupo.id}` },
-        (payload) => {
-          const row = payload.new as { id: string; grupo_id: string; autor_id: string; contenido: string; created_at: string }
-          const autor = perfilesRef.current.get(row.autor_id) ?? null
-          setMensajes((prev) => {
-            if (prev.some((m) => m.id === row.id)) return prev
-            return [...prev, { ...row, autor }]
-          })
-        },
-      )
+      .channel(`pagos-${grupo.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pagos_cancha' }, async () => {
+        const p = await fetchPagoActivo().catch(() => null)
+        setPagoActivo(p)
+      })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [grupo?.id])
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: cargando ? 'instant' : 'smooth' })
-  }, [mensajes])
-
-  async function handleEnviar(e: React.FormEvent) {
-    e.preventDefault()
-    const contenido = texto.trim()
-    if (!contenido || !profile || !grupo || enviando) return
-    setTexto('')
-    setEnviando(true)
+  async function handlePagar() {
+    if (!profile || !pagoActivo || pagando) return
+    setPagando(true)
     try {
-      await enviarMensaje(grupo.id, profile.id, contenido)
-    } catch { /* realtime won't fire on error */ }
-    setEnviando(false)
-    inputRef.current?.focus()
+      await marcarPagado(pagoActivo.partido_id, profile.id)
+      setPagoActivo((prev) => {
+        if (!prev) return null
+        const updated = prev.pagos.map((p) =>
+          p.jugador_id === profile.id
+            ? { ...p, pagado: true, pagado_at: new Date().toISOString() }
+            : p
+        )
+        return updated.every((p) => p.pagado) ? null : { ...prev, pagos: updated }
+      })
+    } catch { /* ignore */ }
+    finally { setPagando(false) }
   }
 
   if (cargando) {
     return (
-      <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--color-bone-dim)' }}>
-        Cargando chat...
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--color-bone-dim)' }}>
+        Cargando...
       </div>
     )
   }
 
-  return (
-    <div className="chat-page">
-      {/* Lista de mensajes */}
-      <div className="chat-mensajes">
-        <div style={{ maxWidth: '640px', margin: '0 auto', padding: '16px 16px 8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-
-          {mensajes.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--color-bone-dim)' }}>
-              <p style={{ fontSize: '14px' }}>Nadie escribió nada todavía.</p>
-              <p style={{ fontSize: '13px', opacity: 0.6, marginTop: '4px' }}>¡Rompé el hielo!</p>
-            </div>
-          )}
-
-          {mensajes.map((m, i) => {
-            const esMio = m.autor_id === profile?.id
-            const anterior = mensajes[i - 1]
-            const mismoAutor = anterior && anterior.autor_id === m.autor_id
-            const msEntre = anterior ? (new Date(m.created_at).getTime() - new Date(anterior.created_at).getTime()) / 1000 / 60 : Infinity
-            const mostrarCabecera = !mismoAutor || msEntre > 5
-
-            return (
-              <div
-                key={m.id}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: esMio ? 'flex-end' : 'flex-start',
-                  marginTop: mostrarCabecera && i > 0 ? '6px' : '0',
-                }}
-              >
-                {/* Cabecera: avatar + nombre (solo si cambia de autor o pasaron >5 min) */}
-                {!esMio && mostrarCabecera && m.autor && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', paddingLeft: '2px' }}>
-                    <Avatar autor={m.autor} size={22} />
-                    <span style={{
-                      fontSize: '12px', fontWeight: 600,
-                      color: m.autor.es_dev ? 'var(--color-gold)' : m.autor.es_admin ? 'var(--color-lime)' : 'var(--color-bone-dim)',
-                    }}>
-                      {m.autor.apodo}
-                    </span>
-                    {m.autor.es_dev && <DevBadge />}
-                  </div>
-                )}
-
-                {/* Burbuja */}
-                <div style={{
-                  maxWidth: '72%',
-                  padding: '8px 13px',
-                  borderRadius: '14px',
-                  borderBottomRightRadius: esMio ? '3px' : '14px',
-                  borderBottomLeftRadius: esMio ? '14px' : '3px',
-                  background: esMio ? 'rgba(139, 197, 63, 0.16)' : 'var(--color-panel)',
-                  border: esMio
-                    ? '1px solid rgba(139, 197, 63, 0.28)'
-                    : '1px solid rgba(242,240,230,0.1)',
-                }}>
-                  <p style={{ fontSize: '14px', lineHeight: 1.5, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
-                    {m.contenido}
-                  </p>
-                </div>
-
-                {/* Hora */}
-                <span style={{
-                  fontSize: '10px', color: 'var(--color-bone-dim)', opacity: 0.45,
-                  marginTop: '2px',
-                  paddingLeft: esMio ? 0 : '2px',
-                  paddingRight: esMio ? '2px' : 0,
-                }}>
-                  {formatHora(m.created_at)}
-                </span>
-              </div>
-            )
-          })}
-
-          <div ref={bottomRef} />
+  /* ── IDLE: sin cobros pendientes ─────────────────────────── */
+  if (!pagoActivo) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '40px 24px' }}>
+        <div className="panel" style={{
+          textAlign: 'center',
+          padding: '8px 40px 10px',
+          maxWidth: '360px',
+          width: '100%',
+          borderColor: 'rgba(139,197,63,0.14)',
+        }}>
+          <img
+            src="/idle.png"
+            alt=""
+            style={{ maxWidth: '220px', width: '100%', marginBottom: '0px', filter: 'grayscale(60%) opacity(0.35)' }}
+          />
+          <h3 style={{ fontSize: '22px', marginTop: '-10px', marginBottom: '10px' }}>Todo al día</h3>
+          <p style={{ fontSize: '14px', color: 'var(--color-bone-dim)', lineHeight: 1.65 }}>
+            Cuando haya un partido con costo de cancha, acá van a aparecer los pagos pendientes.
+          </p>
         </div>
       </div>
+    )
+  }
 
-      {/* Input */}
-      <div className="chat-input-bar">
-        <form
-          onSubmit={handleEnviar}
-          style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', gap: '10px' }}
-        >
-          <input
-            ref={inputRef}
-            type="text"
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            placeholder="Escribí un mensaje..."
-            maxLength={500}
-            autoComplete="off"
-            style={{ flex: 1 }}
-          />
-          <button
-            type="submit"
-            className="btn"
-            disabled={!texto.trim() || enviando}
-            style={{ padding: '0 18px', flexShrink: 0, minWidth: '80px' }}
-          >
-            Enviar
-          </button>
-        </form>
+  /* ── PAGO ACTIVO ─────────────────────────────────────────── */
+  const mePague = pagoActivo.pagos.find((p) => p.jugador_id === profile?.id)?.pagado ?? false
+  const totalPagaron = pagoActivo.pagos.filter((p) => p.pagado).length
+  const totalJugadores = pagoActivo.pagos.length
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '32px 20px' }}>
+      <div style={{ maxWidth: '480px', width: '100%' }}>
+
+        {/* Cabecera */}
+        <p className="eyebrow" style={{ marginBottom: '6px' }}>Pago de cancha</p>
+        <h3 style={{ fontSize: '22px', marginBottom: '6px' }}>
+          Partido del {formatFechaPago(pagoActivo.fecha)}
+        </h3>
+        <p style={{ fontSize: '14px', color: 'var(--color-bone-dim)', marginBottom: '24px' }}>
+          Total{' '}
+          <span style={{ color: 'var(--color-bone)' }}>${pagoActivo.costo_cancha}</span>
+          {' · '}
+          <span style={{ color: 'var(--color-lime)', fontWeight: 600 }}>
+            ${pagoActivo.pagos[0]?.monto} por persona
+          </span>
+          {' · '}
+          {totalPagaron}/{totalJugadores} pagaron
+        </p>
+
+        {/* Lista de jugadores */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+          {pagoActivo.pagos.map((p) => (
+            <div
+              key={p.jugador_id}
+              className="panel"
+              style={{
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                borderColor: p.pagado ? 'rgba(139,197,63,0.28)' : undefined,
+              }}
+            >
+              {p.jugador && (
+                <div style={{
+                  width: '34px', height: '34px', borderRadius: '50%',
+                  background: p.jugador.avatar_color, overflow: 'hidden', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '13px',
+                  color: 'var(--color-carbon-deep)',
+                }}>
+                  {p.jugador.avatar_url
+                    ? <img src={p.jugador.avatar_url} alt={p.jugador.apodo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : p.jugador.dorsal
+                  }
+                </div>
+              )}
+              <span style={{ flex: 1, fontSize: '14px', fontWeight: 500 }}>
+                {p.jugador?.apodo ?? '?'}
+              </span>
+              {p.pagado ? (
+                <span style={{
+                  fontSize: '12px', color: 'var(--color-lime)',
+                  fontFamily: 'var(--font-display)', fontWeight: 600,
+                  textTransform: 'uppercase', letterSpacing: '0.05em',
+                }}>
+                  Pagó ✓
+                </span>
+              ) : (
+                <span style={{ fontSize: '12px', color: 'var(--color-bone-dim)', opacity: 0.55 }}>
+                  Aún no pagó
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Acción del usuario */}
+        {!mePague ? (
+          <>
+            <button
+              onClick={handlePagar}
+              disabled={pagando}
+              className="btn"
+              style={{ width: '100%', padding: '13px' }}
+            >
+              {pagando ? 'Registrando...' : 'Ya pagué ✓'}
+            </button>
+            <p style={{ textAlign: 'center', marginTop: '10px', fontSize: '13px', color: 'var(--color-bone-dim)' }}>
+              Debés <span style={{ color: 'var(--color-bone)', fontWeight: 600 }}>
+                ${pagoActivo.pagos.find((p) => p.jugador_id === profile?.id)?.monto ?? pagoActivo.pagos[0]?.monto}
+              </span>
+            </p>
+          </>
+        ) : (
+          <div style={{
+            textAlign: 'center', padding: '14px',
+            borderRadius: 'var(--radius)',
+            background: 'rgba(139,197,63,0.07)',
+            border: '1px solid rgba(139,197,63,0.18)',
+          }}>
+            <p style={{ fontSize: '14px', color: 'var(--color-lime)', fontWeight: 600 }}>
+              Ya registraste tu pago ✓
+            </p>
+            <p style={{ fontSize: '12px', color: 'var(--color-bone-dim)', marginTop: '3px' }}>
+              Esperando que paguen los demás.
+            </p>
+          </div>
+        )}
+
       </div>
     </div>
   )

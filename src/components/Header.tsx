@@ -32,7 +32,7 @@ export default function Header() {
       }}>
         {/* Logo + nombre app */}
         <Link to="/" className="header-logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          <img src="/logo.png" alt="Coordenadas Fútbol" style={{ height: 34, width: 'auto', display: 'block' }} />
+          <img src="/logo.png" alt="CoordeFutbol" style={{ height: 34, width: 'auto', display: 'block' }} />
           <span className="header-app-name" style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 600,
@@ -41,7 +41,7 @@ export default function Header() {
             letterSpacing: '0.04em',
             color: 'var(--color-bone)',
           }}>
-            Coordenadas Fútbol
+            CoordeFutbol
           </span>
         </Link>
 
@@ -50,7 +50,7 @@ export default function Header() {
           <NavLink to="/home" end style={linkStyle}>Inicio</NavLink>
           {esAdmin && <NavLink to="/partido/nuevo" style={linkStyle}>Cargar</NavLink>}
           <NavLink to="/jugadores" style={linkStyle}>Plantel</NavLink>
-          <NavLink to="/chat" style={linkStyle}>Chat</NavLink>
+          <NavLink to="/chat" style={linkStyle}>Pagos</NavLink>
         </nav>
 
         {/* Perfil */}

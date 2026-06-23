@@ -10,6 +10,10 @@ import DetallePartido from './pages/DetallePartido'
 import Plantel from './pages/Plantel'
 import Perfil from './pages/Perfil'
 import Chat from './pages/Chat'
+import ResetPassword from './pages/ResetPassword'
+import Legal from './pages/Legal'
+import Privacidad from './pages/Privacidad'
+import AlertaBanner from './components/AlertaBanner'
 
 const Cargando = () => (
   <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-bone-dim)' }}>
@@ -32,6 +36,7 @@ function GrupoLayout() {
   return (
     <>
       <Header />
+      <AlertaBanner />
       <main style={{ flex: 1 }}>
         <Outlet />
       </main>
@@ -56,6 +61,9 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<LoginRoute />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/legal" element={<Legal />} />
+          <Route path="/privacidad" element={<Privacidad />} />
 
           <Route element={<AuthLayout />}>
             <Route path="/grupo" element={<SeleccionGrupo />} />

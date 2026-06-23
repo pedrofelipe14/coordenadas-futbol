@@ -37,8 +37,6 @@ export default function NuevoPartido() {
   const [hora, setHora] = useState('')
   const [formato, setFormato] = useState<'5' | '7' | '9'>('5')
   const [costo, setCosto] = useState('')
-  const [equipoSaque, setEquipoSaque] = useState<'A' | 'B' | null>(null)
-  // null = sin asignar, 'A' = Sin pechera, 'B' = Con pechera
   const [asignaciones, setAsignaciones] = useState<Map<string, 'A' | 'B'>>(new Map())
   const [error, setError] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
@@ -75,7 +73,7 @@ export default function NuevoPartido() {
         hora: hora || null,
         lugar: lugar.trim(),
         formato,
-        equipo_saque: equipoSaque,
+        equipo_saque: 'A',
         costo_cancha: costo ? Number(costo) : null,
         creado_por: profile.id,
         grupo_id: profile.grupo_id!,
@@ -90,21 +88,6 @@ export default function NuevoPartido() {
 
   const jugadoresA = jugadores.filter((j) => asignaciones.get(j.id) === 'A')
   const jugadoresB = jugadores.filter((j) => asignaciones.get(j.id) === 'B')
-
-  const saqueStyle = (equipo: 'A' | 'B'): React.CSSProperties => ({
-    flex: 1,
-    padding: '10px',
-    border: equipoSaque === equipo ? '2px solid var(--color-lime)' : '2px solid rgba(242,240,230,0.12)',
-    borderRadius: 'var(--radius)',
-    background: equipoSaque === equipo ? 'rgba(139,197,63,0.1)' : 'transparent',
-    color: equipoSaque === equipo ? 'var(--color-lime)' : 'var(--color-bone-dim)',
-    fontFamily: 'var(--font-display)',
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
-    fontSize: '13px',
-    cursor: 'pointer',
-  })
 
   const btnEquipo = (jugadorId: string, equipo: 'A' | 'B'): React.CSSProperties => {
     const sel = asignaciones.get(jugadorId) === equipo
@@ -167,16 +150,10 @@ export default function NuevoPartido() {
         </div>
 
         {/* Saque inicial */}
-        <div className="panel" style={{ padding: '20px' }}>
-          <p className="eyebrow" style={{ marginBottom: '14px' }}>Saque inicial</p>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button type="button" style={saqueStyle('A')} onClick={() => setEquipoSaque(equipoSaque === 'A' ? null : 'A')}>
-              {EQUIPO_A}
-            </button>
-            <button type="button" style={saqueStyle('B')} onClick={() => setEquipoSaque(equipoSaque === 'B' ? null : 'B')}>
-              {EQUIPO_B}
-            </button>
-          </div>
+        <div className="panel" style={{ padding: '18px 20px', textAlign: 'center' }}>
+          <p style={{ fontSize: '17px', color: 'var(--color-lime)', fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+            Siempre saca Sin pechera
+          </p>
         </div>
 
         {/* Equipos */}

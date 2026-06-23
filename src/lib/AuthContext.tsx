@@ -1,12 +1,14 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
-import type { Profile, Grupo } from '../types'
+import type { Profile, Grupo, MembresiaGrupo } from '../types'
+import { fetchMisGrupos } from './data'
 
 interface AuthContextValue {
   session: Session | null
   profile: Profile | null
   grupo: Grupo | null
+  misGrupos: MembresiaGrupo[]
   esAdmin: boolean
   loading: boolean
   refreshProfile: () => Promise<void>
@@ -19,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [grupo, setGrupo] = useState<Grupo | null>(null)
+  const [misGrupos, setMisGrupos] = useState<MembresiaGrupo[]>([])
   const [loading, setLoading] = useState(true)
 
   async function loadProfile(userId: string) {
@@ -30,6 +33,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const p = profileData as Profile | null
     setProfile(p)
+
+    try {
+      setMisGrupos(await fetchMisGrupos(userId))
+    } catch {
+      setMisGrupos([])
+    }
 
     if (p?.grupo_id) {
       const { data: grupoData } = await supabase
@@ -66,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null)
           setGrupo(null)
+          setMisGrupos([])
         }
       }
     )
@@ -80,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const esAdmin = (profile?.es_admin || profile?.es_dev) ?? false
 
   return (
-    <AuthContext.Provider value={{ session, profile, grupo, esAdmin, loading, refreshProfile, signOut }}>
+    <AuthContext.Provider value={{ session, profile, grupo, misGrupos, esAdmin, loading, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   )

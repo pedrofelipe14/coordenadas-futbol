@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { crearGrupo, unirseAGrupo } from '../lib/data'
 import { useAuth } from '../lib/AuthContext'
 
 export default function SeleccionGrupo() {
-  const { profile, refreshProfile } = useAuth()
+  const { profile, refreshProfile, signOut } = useAuth()
   const navigate = useNavigate()
-  const [tab, setTab] = useState<'crear' | 'unirse'>('crear')
+  const [searchParams] = useSearchParams()
+  const codigoParam = searchParams.get('codigo') ?? ''
+  const [tab, setTab] = useState<'crear' | 'unirse'>(codigoParam ? 'unirse' : 'crear')
   const [nombreGrupo, setNombreGrupo] = useState('')
-  const [codigoInput, setCodigoInput] = useState('')
+  const [codigoInput, setCodigoInput] = useState(codigoParam)
   const [error, setError] = useState<string | null>(null)
   const [cargando, setCargando] = useState(false)
   const [grupoCreado, setGrupoCreado] = useState<{ nombre: string; codigo: string } | null>(null)
@@ -22,8 +24,8 @@ export default function SeleccionGrupo() {
       const resultado = await crearGrupo(nombreGrupo, profile.id)
       await refreshProfile()
       setGrupoCreado({ nombre: resultado.nombre, codigo: resultado.codigo })
-    } catch {
-      setError('No se pudo crear el equipo. Probá de nuevo.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo crear el equipo. Probá de nuevo.')
     } finally {
       setCargando(false)
     }
@@ -38,8 +40,8 @@ export default function SeleccionGrupo() {
       await unirseAGrupo(codigoInput, profile.id)
       await refreshProfile()
       navigate('/home')
-    } catch {
-      setError('Código inválido. Revisá que esté bien escrito.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Código inválido. Revisá que esté bien escrito.')
     } finally {
       setCargando(false)
     }
@@ -114,6 +116,14 @@ export default function SeleccionGrupo() {
             Creá tu equipo<br />o unite a uno
           </h2>
         </div>
+
+        <button
+          onClick={signOut}
+          className="btn-ghost"
+          style={{ width: '100%', marginBottom: '20px', fontSize: '13px', opacity: 0.6 }}
+        >
+          Cerrar sesión
+        </button>
 
         <div className="panel" style={{ padding: '4px', marginBottom: '20px' }}>
           <div style={{ display: 'flex' }}>
