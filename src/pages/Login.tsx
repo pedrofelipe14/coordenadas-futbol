@@ -24,10 +24,17 @@ export default function Login() {
     setCargando(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
-      if (error.message.includes('Email not confirmed')) {
+      const msg = error.message
+      if (msg.includes('Email not confirmed')) {
         setError('Todavía no confirmaste tu mail. Revisá tu bandeja de entrada.')
+      } else if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
+        setError('Mail o contraseña incorrectos. Revisá los datos e intentá de nuevo.')
+      } else if (msg.includes('Too many requests') || msg.includes('rate limit')) {
+        setError('Demasiados intentos fallidos. Esperá unos minutos antes de volver a intentarlo.')
+      } else if (msg.includes('User not found') || msg.includes('user_not_found')) {
+        setError('No existe una cuenta con ese mail.')
       } else {
-        setError('Mail o contraseña incorrectos. Probá de nuevo.')
+        setError(`Error al iniciar sesión: ${msg}`)
       }
     }
     setCargando(false)
@@ -88,12 +95,15 @@ export default function Login() {
   }
 
   function traducirError(msg: string): string {
-    if (msg.includes('already registered') || msg.includes('User already registered')) return 'Ese mail ya tiene una cuenta. Probá entrar.'
-    if (msg.includes('Password should be')) return 'La contraseña tiene que tener al menos 6 caracteres.'
-    if (msg.includes('Unable to validate email') || msg.includes('invalid format')) return 'Ese mail no parece válido.'
+    if (msg.includes('already registered') || msg.includes('User already registered')) return 'Ese mail ya tiene una cuenta. Probá entrar directamente.'
+    if (msg.includes('Password should be') || msg.includes('password')) return 'La contraseña tiene que tener al menos 6 caracteres.'
+    if (msg.includes('Unable to validate email') || msg.includes('invalid format') || msg.includes('valid email')) return 'El mail no parece válido. Revisá que esté bien escrito.'
+    if (msg.includes('profiles_apodo_key') || msg.includes('unique') && msg.includes('apodo')) return 'Ese apodo ya está en uso. Elegí otro.'
     if (msg.includes('Signups not allowed') || msg.includes('signup_disabled') || msg.includes('not enabled')) return 'El registro está desactivado en este momento.'
-    if (msg.includes('Email rate limit') || msg.includes('rate limit')) return 'Demasiados intentos. Esperá unos minutos y volvé a intentarlo.'
-    if (msg.includes('SMTP') || msg.includes('smtp') || msg.includes('email') || msg.includes('send')) return 'Hubo un problema al enviar el mail de confirmación. Revisá la configuración de SMTP en Supabase.'
+    if (msg.includes('Email rate limit') || msg.includes('rate limit') || msg.includes('Too many')) return 'Demasiados intentos. Esperá unos minutos y volvé a intentarlo.'
+    if (msg.includes('SMTP') || msg.includes('smtp') || msg.includes('sending')) return 'Hubo un problema al enviar el mail de confirmación. Intentá de nuevo en unos minutos.'
+    if (msg.includes('Database error') || msg.includes('database')) return 'Error interno al crear la cuenta. Intentá de nuevo.'
+    if (msg.includes('Network') || msg.includes('fetch')) return 'Sin conexión. Revisá tu internet e intentá de nuevo.'
     return `Error al crear la cuenta: ${msg}`
   }
 
