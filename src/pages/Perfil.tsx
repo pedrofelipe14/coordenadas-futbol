@@ -32,7 +32,7 @@ export default function Perfil() {
   async function handleCompartir(codigo: string, nombre: string) {
     const url = `${window.location.origin}/grupo?codigo=${codigo}`
     if (navigator.share) {
-      try { await navigator.share({ title: `Unite a ${nombre}`, text: 'Unite a mi equipo en CoordeFutbol', url }) }
+      try { await navigator.share({ title: `Unite a ${nombre} en CoordeFutbol`, text: `Te invito a unirte a mi grupo "${nombre}" en CoordeFutbol, la app para coordinar los partidos del grupo. Entrá con este link y registrate:`, url }) }
       catch { /* cancelado */ }
     } else {
       await navigator.clipboard.writeText(url)
