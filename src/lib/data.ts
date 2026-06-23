@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Partido, PartidoCompleto, PartidoDetalle, GolConJugador, PartidoJugadorConPerfil, JugadaEpica, GoleadorStat, Profile, EstadisticasJugador, MensajeConAutor } from '../types'
+import type { Partido, PartidoCompleto, PartidoDetalle, GolConJugador, PartidoJugadorConPerfil, JugadaEpica, GoleadorStat, Profile, EstadisticasJugador, MensajeConAutor, MembresiaGrupo, PagoCancha, PagoPartido } from '../types'
 
 const CODIGO_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
@@ -14,38 +14,106 @@ function generarCodigo(): string {
 // ----------------------------------------------------------------
 
 export async function crearGrupo(nombre: string, userId: string): Promise<{ id: string; nombre: string; codigo: string }> {
+  const { count } = await supabase
+    .from('grupo_miembros')
+    .select('*', { count: 'exact', head: true })
+    .eq('perfil_id', userId)
+
+  if ((count ?? 0) >= 2) throw new Error('Ya estás en el máximo de grupos permitidos (2)')
+
   const id = crypto.randomUUID()
   const codigo = generarCodigo()
 
   const { error: errGrupo } = await supabase
     .from('grupos')
     .insert({ id, nombre: nombre.trim(), codigo, creado_por: userId })
-
   if (errGrupo) throw errGrupo
+
+  const { error: errMem } = await supabase
+    .from('grupo_miembros')
+    .insert({ perfil_id: userId, grupo_id: id, es_admin: true })
+  if (errMem) throw errMem
 
   const { error: errProfile } = await supabase
     .from('profiles')
     .update({ grupo_id: id, es_admin: true })
     .eq('id', userId)
-
   if (errProfile) throw errProfile
 
   return { id, nombre: nombre.trim(), codigo }
 }
 
 export async function unirseAGrupo(codigoInput: string, userId: string): Promise<void> {
+  const { count: cantGrupos } = await supabase
+    .from('grupo_miembros')
+    .select('*', { count: 'exact', head: true })
+    .eq('perfil_id', userId)
+
+  if ((cantGrupos ?? 0) >= 2) throw new Error('Ya estás en el máximo de grupos permitidos (2)')
+
   const { data, error } = await supabase.rpc('buscar_grupo_por_codigo', {
     p_codigo: codigoInput.trim().toUpperCase(),
   })
 
   if (error || !data || data.length === 0) throw new Error('Código inválido')
 
+  const grupoId: string = data[0].id
+
+  const { count: yaEsMiembro } = await supabase
+    .from('grupo_miembros')
+    .select('*', { count: 'exact', head: true })
+    .eq('perfil_id', userId)
+    .eq('grupo_id', grupoId)
+
+  if ((yaEsMiembro ?? 0) > 0) throw new Error('Ya sos miembro de ese grupo')
+
+  const { error: errMem } = await supabase
+    .from('grupo_miembros')
+    .insert({ perfil_id: userId, grupo_id: grupoId, es_admin: false })
+  if (errMem) throw errMem
+
   const { error: errProfile } = await supabase
     .from('profiles')
-    .update({ grupo_id: data[0].id, es_admin: false })
+    .update({ grupo_id: grupoId, es_admin: false })
     .eq('id', userId)
-
   if (errProfile) throw errProfile
+}
+
+export async function fetchMisGrupos(userId: string): Promise<MembresiaGrupo[]> {
+  const { data, error } = await supabase
+    .from('grupo_miembros')
+    .select('perfil_id, grupo_id, es_admin, joined_at, grupo:grupos(nombre, codigo, creado_por)')
+    .eq('perfil_id', userId)
+
+  if (error) throw error
+
+  return (data || []).map((m) => {
+    const g = Array.isArray(m.grupo) ? m.grupo[0] : m.grupo as { nombre: string; codigo: string; creado_por: string | null } | null
+    return {
+      perfil_id: m.perfil_id as string,
+      grupo_id: m.grupo_id as string,
+      grupo_nombre: g?.nombre ?? '',
+      grupo_codigo: g?.codigo ?? '',
+      grupo_creado_por: g?.creado_por ?? null,
+      es_admin: m.es_admin as boolean,
+      joined_at: m.joined_at as string,
+    }
+  })
+}
+
+export async function cambiarGrupoActivo(userId: string, grupoId: string): Promise<void> {
+  const { data: mem } = await supabase
+    .from('grupo_miembros')
+    .select('es_admin')
+    .eq('perfil_id', userId)
+    .eq('grupo_id', grupoId)
+    .maybeSingle()
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ grupo_id: grupoId, es_admin: (mem as { es_admin: boolean } | null)?.es_admin ?? false })
+    .eq('id', userId)
+  if (error) throw error
 }
 
 // ----------------------------------------------------------------
@@ -159,9 +227,81 @@ export async function arrancarPartido(input: InputArrancarPartido): Promise<stri
         equipo: l.equipo,
       })))
     if (errLineup) throw errLineup
+
+    if (input.costo_cancha && input.costo_cancha > 0) {
+      await supabase.rpc('crear_pagos_partido', {
+        p_partido_id: partido.id,
+        p_costo: input.costo_cancha,
+      })
+    }
   }
 
   return partido.id
+}
+
+// ----------------------------------------------------------------
+// PAGOS DE CANCHA
+// ----------------------------------------------------------------
+
+export async function fetchPagoActivo(): Promise<PagoPartido | null> {
+  const [pagosRes, perfilesRes] = await Promise.all([
+    supabase.from('pagos_cancha').select('partido_id, jugador_id, monto, pagado, pagado_at'),
+    supabase.from('profiles').select('*'),
+  ])
+
+  type PagoRow = { partido_id: string; jugador_id: string; monto: number; pagado: boolean; pagado_at: string | null }
+  const pagos = (pagosRes.data ?? []) as PagoRow[]
+  const perfiles = new Map<string, Profile>(((perfilesRes.data ?? []) as Profile[]).map((p) => [p.id, p]))
+
+  if (pagos.length === 0) return null
+
+  // Agrupar por partido
+  const byPartido = new Map<string, PagoRow[]>()
+  for (const p of pagos) {
+    if (!byPartido.has(p.partido_id)) byPartido.set(p.partido_id, [])
+    byPartido.get(p.partido_id)!.push(p)
+  }
+
+  // Solo partidos con al menos un pago pendiente
+  const conPendientes = [...byPartido.keys()].filter((pid) =>
+    byPartido.get(pid)!.some((p) => !p.pagado)
+  )
+  if (conPendientes.length === 0) return null
+
+  // Partido más reciente con pendientes
+  const { data: partidos } = await supabase
+    .from('partidos')
+    .select('id, fecha, costo_cancha')
+    .in('id', conPendientes)
+    .order('fecha', { ascending: false })
+    .limit(1)
+
+  if (!partidos || partidos.length === 0) return null
+
+  const p = partidos[0] as { id: string; fecha: string; costo_cancha: number }
+
+  return {
+    partido_id: p.id,
+    fecha: p.fecha,
+    costo_cancha: p.costo_cancha,
+    pagos: (byPartido.get(p.id) ?? []).map((row) => ({
+      partido_id: row.partido_id,
+      jugador_id: row.jugador_id,
+      monto: row.monto,
+      pagado: row.pagado,
+      pagado_at: row.pagado_at,
+      jugador: perfiles.get(row.jugador_id) ?? null,
+    })),
+  }
+}
+
+export async function marcarPagado(partidoId: string, jugadorId: string): Promise<void> {
+  const { error } = await supabase
+    .from('pagos_cancha')
+    .update({ pagado: true, pagado_at: new Date().toISOString() })
+    .eq('partido_id', partidoId)
+    .eq('jugador_id', jugadorId)
+  if (error) throw error
 }
 
 // ----------------------------------------------------------------
@@ -279,12 +419,35 @@ export async function fetchEstadisticasJugador(jugadorId: string): Promise<Estad
   return { goles: totalGoles, partidosJugados: jugados, partidosGanados: ganados, partidosPerdidos: perdidos, partidosEmpatados: empatados }
 }
 
-export async function salirDeGrupo(userId: string): Promise<void> {
-  const { error } = await supabase
+export async function salirDeGrupo(userId: string, grupoId: string): Promise<void> {
+  const { error: errMem } = await supabase
+    .from('grupo_miembros')
+    .delete()
+    .eq('perfil_id', userId)
+    .eq('grupo_id', grupoId)
+  if (errMem) throw errMem
+
+  // Si era el grupo activo, cambiar al otro (o null)
+  const { data: prof } = await supabase
     .from('profiles')
-    .update({ grupo_id: null, es_admin: false })
+    .select('grupo_id')
     .eq('id', userId)
-  if (error) throw error
+    .maybeSingle()
+
+  if ((prof as { grupo_id: string | null } | null)?.grupo_id === grupoId) {
+    const { data: otras } = await supabase
+      .from('grupo_miembros')
+      .select('grupo_id, es_admin')
+      .eq('perfil_id', userId)
+      .limit(1)
+
+    const otra = otras?.[0] as { grupo_id: string; es_admin: boolean } | undefined
+    const { error } = await supabase
+      .from('profiles')
+      .update({ grupo_id: otra?.grupo_id ?? null, es_admin: otra?.es_admin ?? false })
+      .eq('id', userId)
+    if (error) throw error
+  }
 }
 
 export async function eliminarGrupo(): Promise<void> {
@@ -380,6 +543,149 @@ const NOMBRES_MES = [
 // CHAT
 // ----------------------------------------------------------------
 
+export interface StatusJugador {
+  stats: EstadisticasJugador
+  racha: number       // victorias consecutivas actuales
+  mundiales: number   // mundiales ganados históricamente
+  pechoFrio: boolean  // perdió cuando estaba a 1 del siguiente mundial
+  casiAlla: boolean   // racha % 7 === 6 → a 1 victoria del próximo mundial
+}
+
+export interface DatosPlantel {
+  statusMap: Map<string, StatusJugador>
+}
+
+const MUNDIAL_CICLO = 7
+
+export async function fetchDatosPlantel(): Promise<DatosPlantel> {
+  type LineupRow = { jugador_id: string; equipo: string; partido: unknown }
+  type PartidoRow = { goles_a: number; goles_b: number; estado: string; fecha: string; created_at: string }
+  type GameEntry = { resultado: 'ganado' | 'perdido' | 'empate'; fecha: string; created_at: string }
+
+  const [lineupRes, golesRes] = await Promise.all([
+    supabase
+      .from('partido_jugadores')
+      .select('jugador_id, equipo, partido:partidos(goles_a, goles_b, estado, fecha, created_at)'),
+    supabase
+      .from('goles')
+      .select('jugador_id, cantidad'),
+  ])
+
+  const _stats = new Map<string, EstadisticasJugador>()
+  const _games = new Map<string, GameEntry[]>()
+
+  function getOrCreate(id: string): EstadisticasJugador {
+    if (!_stats.has(id)) {
+      _stats.set(id, { goles: 0, partidosJugados: 0, partidosGanados: 0, partidosPerdidos: 0, partidosEmpatados: 0 })
+    }
+    return _stats.get(id)!
+  }
+
+  ;(golesRes.data || []).forEach((g: { jugador_id: string; cantidad: number }) => {
+    getOrCreate(g.jugador_id).goles += g.cantidad
+  })
+
+  ;(lineupRes.data || []).forEach((l: LineupRow) => {
+    const p = (Array.isArray(l.partido) ? l.partido[0] : l.partido) as PartidoRow | null
+    if (!p || p.estado !== 'finalizado') return
+
+    const s = getOrCreate(l.jugador_id)
+    s.partidosJugados++
+
+    let resultado: GameEntry['resultado']
+    if (p.goles_a === p.goles_b) {
+      resultado = 'empate'
+      s.partidosEmpatados++
+    } else {
+      const gane = (l.equipo === 'A' && p.goles_a > p.goles_b) || (l.equipo === 'B' && p.goles_b > p.goles_a)
+      resultado = gane ? 'ganado' : 'perdido'
+      if (gane) s.partidosGanados++
+      else s.partidosPerdidos++
+    }
+
+    const arr = _games.get(l.jugador_id) ?? []
+    arr.push({ resultado, fecha: p.fecha, created_at: p.created_at })
+    _games.set(l.jugador_id, arr)
+  })
+
+  const statusMap = new Map<string, StatusJugador>()
+  const emptyStats = (): EstadisticasJugador => ({ goles: 0, partidosJugados: 0, partidosGanados: 0, partidosPerdidos: 0, partidosEmpatados: 0 })
+
+  _games.forEach((games, id) => {
+    // Cronológico ascendente para computar racha y mundiales correctamente
+    const asc = [...games].sort((a, b) =>
+      a.fecha !== b.fecha ? a.fecha.localeCompare(b.fecha) : a.created_at.localeCompare(b.created_at)
+    )
+
+    let racha = 0
+    let mundiales = 0
+    let rachaAntesDeUltimaRuptura = 0 // para detectar pecho frío
+
+    for (const g of asc) {
+      if (g.resultado === 'ganado') {
+        racha++
+        if (racha % MUNDIAL_CICLO === 0) mundiales++
+      } else {
+        if (racha > 0) rachaAntesDeUltimaRuptura = racha
+        racha = 0
+      }
+    }
+
+    const ultimoPartido = asc[asc.length - 1]
+    const pechoFrio =
+      racha === 0 &&
+      !!ultimoPartido &&
+      ultimoPartido.resultado !== 'ganado' &&
+      rachaAntesDeUltimaRuptura > 0 &&
+      rachaAntesDeUltimaRuptura % MUNDIAL_CICLO === MUNDIAL_CICLO - 1
+
+    const casiAlla = racha > 0 && racha % MUNDIAL_CICLO === MUNDIAL_CICLO - 1
+
+    statusMap.set(id, {
+      stats: _stats.get(id) ?? emptyStats(),
+      racha,
+      mundiales,
+      pechoFrio,
+      casiAlla,
+    })
+  })
+
+  // Jugadores que solo tienen goles (sin apariciones en lineup)
+  _stats.forEach((stats, id) => {
+    if (!statusMap.has(id)) {
+      statusMap.set(id, { stats, racha: 0, mundiales: 0, pechoFrio: false, casiAlla: false })
+    }
+  })
+
+  return { statusMap }
+}
+
+export async function fetchProximoPartido(userId: string): Promise<{ fecha: string; hora: string | null; lugar: string } | null> {
+  const hoy = new Date().toISOString().slice(0, 10)
+
+  const { data, error } = await supabase
+    .from('partidos')
+    .select('id, fecha, hora, lugar')
+    .eq('estado', 'en_curso')
+    .gte('fecha', hoy)
+    .order('fecha', { ascending: true })
+    .limit(10)
+
+  if (error || !data || data.length === 0) return null
+
+  for (const p of data as { id: string; fecha: string; hora: string | null; lugar: string }[]) {
+    const { count } = await supabase
+      .from('partido_jugadores')
+      .select('*', { count: 'exact', head: true })
+      .eq('partido_id', p.id)
+      .eq('jugador_id', userId)
+
+    if ((count ?? 0) > 0) return { fecha: p.fecha, hora: p.hora, lugar: p.lugar }
+  }
+
+  return null
+}
+
 export async function fetchMensajes(grupoId: string): Promise<MensajeConAutor[]> {
   const { data, error } = await supabase
     .from('mensajes')
@@ -402,6 +708,8 @@ export async function enviarMensaje(grupoId: string, autorId: string, contenido:
     .insert({ grupo_id: grupoId, autor_id: autorId, contenido: contenido.trim() })
   if (error) throw error
 }
+
+
 
 export function etiquetaMes(key: string): string {
   const [anio, mes] = key.split('-')

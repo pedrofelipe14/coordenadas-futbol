@@ -177,7 +177,6 @@ export default function DetallePartido() {
 
   const lineupA = partido.lineup.filter((pj) => pj.equipo === 'A')
   const lineupB = partido.lineup.filter((pj) => pj.equipo === 'B')
-  const saqueNombre = partido.equipo_saque === 'A' ? partido.equipo_a : partido.equipo_saque === 'B' ? partido.equipo_b : null
 
   return (
     <div style={{ maxWidth: '560px', margin: '0 auto', padding: '32px 20px 60px' }}>
@@ -202,9 +201,9 @@ export default function DetallePartido() {
           {partido.lugar || 'Cancha sin nombre'} · Fútbol {partido.formato}
         </p>
 
-        {saqueNombre && partido.estado === 'en_curso' && (
+        {partido.estado === 'en_curso' && (
           <p style={{ fontSize: '12px', color: 'var(--color-bone-dim)', marginBottom: '16px' }}>
-            Saque inicial: <span style={{ color: 'var(--color-bone)' }}>{saqueNombre}</span>
+            Saque inicial: <span style={{ color: 'var(--color-bone)' }}>Sin pechera</span>
           </p>
         )}
 
