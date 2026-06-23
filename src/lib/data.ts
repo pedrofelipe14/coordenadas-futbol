@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Partido, PartidoCompleto, PartidoDetalle, GolConJugador, PartidoJugadorConPerfil, JugadaEpica, GoleadorStat, Profile, EstadisticasJugador, MensajeConAutor, MembresiaGrupo, PagoCancha, PagoPartido } from '../types'
+import type { Partido, PartidoCompleto, PartidoDetalle, GolConJugador, PartidoJugadorConPerfil, JugadaEpica, GoleadorStat, Profile, EstadisticasJugador, MensajeConAutor, MembresiaGrupo, PagoPartido } from '../types'
 
 const CODIGO_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 

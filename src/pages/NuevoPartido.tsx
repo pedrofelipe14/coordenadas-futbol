@@ -4,8 +4,6 @@ import { fetchJugadores, arrancarPartido } from '../lib/data'
 import { useAuth } from '../lib/AuthContext'
 import type { Profile } from '../types'
 
-const EQUIPO_A = 'Sin pechera'
-const EQUIPO_B = 'Con pechera'
 
 function AvatarJugador({ jugador, size = 32 }: { jugador: Profile; size?: number }) {
   return (
