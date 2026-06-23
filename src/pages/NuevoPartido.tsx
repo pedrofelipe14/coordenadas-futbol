@@ -36,8 +36,21 @@ export default function NuevoPartido() {
   const [formato, setFormato] = useState<'5' | '7' | '9'>('5')
   const [costo, setCosto] = useState('')
   const [asignaciones, setAsignaciones] = useState<Map<string, 'A' | 'B'>>(new Map())
+  const [invitados, setInvitados] = useState<{ nombre: string; equipo: 'A' | 'B' }[]>([])
+  const [nombreInvitado, setNombreInvitado] = useState('')
+  const [equipoInvitado, setEquipoInvitado] = useState<'A' | 'B'>('A')
   const [error, setError] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
+
+  function agregarInvitado() {
+    if (!nombreInvitado.trim()) return
+    setInvitados((prev) => [...prev, { nombre: nombreInvitado.trim(), equipo: equipoInvitado }])
+    setNombreInvitado('')
+  }
+
+  function quitarInvitado(idx: number) {
+    setInvitados((prev) => prev.filter((_, i) => i !== idx))
+  }
 
   useEffect(() => {
     fetchJugadores().then(setJugadores).catch(() => setError('No se pudo cargar el plantel.'))
@@ -76,6 +89,7 @@ export default function NuevoPartido() {
         creado_por: profile.id,
         grupo_id: profile.grupo_id!,
         lineup,
+        invitados,
       })
       navigate(`/partido/${id}`)
     } catch {
@@ -205,6 +219,75 @@ export default function NuevoPartido() {
                 </p>
                 {jugadoresB.map((j) => <p key={j.id} style={{ fontSize: '13px', color: 'var(--color-bone-dim)' }}>{j.apodo}</p>)}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Invitados */}
+        <div className="panel" style={{ padding: '20px' }}>
+          <p className="eyebrow" style={{ marginBottom: '4px' }}>Invitados</p>
+          <p style={{ fontSize: '12px', color: 'var(--color-bone-dim)', marginBottom: '14px' }}>
+            Personas que juegan este partido pero no son del grupo.
+          </p>
+
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+            <input
+              type="text"
+              value={nombreInvitado}
+              onChange={(e) => setNombreInvitado(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), agregarInvitado())}
+              placeholder="Nombre del invitado"
+              style={{ flex: 1 }}
+            />
+            <button
+              type="button"
+              style={{
+                padding: '4px 10px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)',
+                fontWeight: 600, fontSize: '11px', textTransform: 'uppercase' as const, letterSpacing: '0.04em', cursor: 'pointer',
+                border: equipoInvitado === 'A' ? '1px solid var(--color-lime)' : '1px solid rgba(242,240,230,0.15)',
+                background: equipoInvitado === 'A' ? 'rgba(139,197,63,0.15)' : 'transparent',
+                color: equipoInvitado === 'A' ? 'var(--color-lime)' : 'var(--color-bone-dim)',
+              }}
+              onClick={() => setEquipoInvitado('A')}
+            >SP</button>
+            <button
+              type="button"
+              style={{
+                padding: '4px 10px', borderRadius: 'var(--radius)', fontFamily: 'var(--font-display)',
+                fontWeight: 600, fontSize: '11px', textTransform: 'uppercase' as const, letterSpacing: '0.04em', cursor: 'pointer',
+                border: equipoInvitado === 'B' ? '1px solid var(--color-gold)' : '1px solid rgba(242,240,230,0.15)',
+                background: equipoInvitado === 'B' ? 'rgba(212,175,55,0.15)' : 'transparent',
+                color: equipoInvitado === 'B' ? 'var(--color-gold)' : 'var(--color-bone-dim)',
+              }}
+              onClick={() => setEquipoInvitado('B')}
+            >CP</button>
+            <button
+              type="button"
+              onClick={agregarInvitado}
+              className="btn"
+              style={{ padding: '6px 14px', fontSize: '13px' }}
+            >+</button>
+          </div>
+
+          {invitados.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {invitados.map((inv, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{
+                    fontSize: '11px', fontFamily: 'var(--font-display)', fontWeight: 600,
+                    textTransform: 'uppercase', letterSpacing: '0.04em',
+                    color: inv.equipo === 'A' ? 'var(--color-lime)' : 'var(--color-gold)',
+                  }}>
+                    {inv.equipo === 'A' ? 'SP' : 'CP'}
+                  </span>
+                  <span style={{ flex: 1, fontSize: '14px' }}>{inv.nombre}</span>
+                  <button
+                    type="button"
+                    onClick={() => quitarInvitado(idx)}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-bone-dim)', cursor: 'pointer', fontSize: '16px', padding: '0 4px', opacity: 0.6 }}
+                  >×</button>
+                </div>
+              ))}
             </div>
           )}
         </div>

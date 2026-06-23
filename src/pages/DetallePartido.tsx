@@ -33,21 +33,33 @@ function AvatarJugador({ jugador, size = 30 }: { jugador: Profile; size?: number
   )
 }
 
-function LineupColumna({ titulo, color, jugadores }: { titulo: string; color: string; jugadores: PartidoJugadorConPerfil[] }) {
+function LineupColumna({ titulo, color, jugadores, invitados }: { titulo: string; color: string; jugadores: PartidoJugadorConPerfil[]; invitados: { id: string; nombre: string }[] }) {
+  const total = jugadores.length + invitados.length
   return (
     <div>
       <p style={{ fontSize: '11px', color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px', fontFamily: 'var(--font-display)', fontWeight: 600 }}>
-        {titulo} ({jugadores.length})
+        {titulo} ({total})
       </p>
-      {jugadores.length === 0
+      {total === 0
         ? <p style={{ fontSize: '13px', color: 'var(--color-bone-dim)' }}>—</p>
-        : jugadores.map((pj) => (
-          <div key={pj.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <AvatarJugador jugador={pj.jugador} size={26} />
-            <span style={{ fontSize: '13px', color: pj.jugador.es_dev ? 'var(--color-gold)' : pj.jugador.es_admin ? 'var(--color-lime)' : undefined }}>{pj.jugador.apodo}</span>
-            {pj.jugador.es_dev && <DevBadge />}
-          </div>
-        ))
+        : <>
+          {jugadores.map((pj) => (
+            <div key={pj.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <AvatarJugador jugador={pj.jugador} size={26} />
+              <span style={{ fontSize: '13px', color: pj.jugador.es_dev ? 'var(--color-gold)' : pj.jugador.es_admin ? 'var(--color-lime)' : undefined }}>{pj.jugador.apodo}</span>
+              {pj.jugador.es_dev && <DevBadge />}
+            </div>
+          ))}
+          {invitados.map((inv) => (
+            <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(242,240,230,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '12px' }}>
+                👤
+              </div>
+              <span style={{ fontSize: '13px', color: 'var(--color-bone-dim)' }}>{inv.nombre}</span>
+              <span style={{ fontSize: '10px', color: 'var(--color-bone-dim)', opacity: 0.5, fontFamily: 'var(--font-display)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>inv</span>
+            </div>
+          ))}
+        </>
       }
     </div>
   )
@@ -224,12 +236,12 @@ export default function DetallePartido() {
       </div>
 
       {/* Lineup */}
-      {partido.lineup.length > 0 && (
+      {(partido.lineup.length > 0 || partido.invitados.length > 0) && (
         <div className="panel" style={{ padding: '20px', marginBottom: '20px' }}>
           <p className="eyebrow" style={{ marginBottom: '16px' }}>Equipos</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <LineupColumna titulo={partido.equipo_a} color="var(--color-lime)" jugadores={lineupA} />
-            <LineupColumna titulo={partido.equipo_b} color="var(--color-gold)" jugadores={lineupB} />
+            <LineupColumna titulo={partido.equipo_a} color="var(--color-lime)" jugadores={lineupA} invitados={partido.invitados.filter(i => i.equipo === 'A')} />
+            <LineupColumna titulo={partido.equipo_b} color="var(--color-gold)" jugadores={lineupB} invitados={partido.invitados.filter(i => i.equipo === 'B')} />
           </div>
         </div>
       )}

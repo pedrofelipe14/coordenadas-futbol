@@ -81,9 +81,17 @@ export interface JugadaEpica {
   created_at: string
 }
 
+export interface Invitado {
+  id: string
+  partido_id: string
+  nombre: string
+  equipo: 'A' | 'B'
+}
+
 export interface PartidoDetalle extends PartidoCompleto {
   lineup: PartidoJugadorConPerfil[]
   jugadas: JugadaEpica[]
+  invitados: Invitado[]
 }
 
 export interface GoleadorStat {
