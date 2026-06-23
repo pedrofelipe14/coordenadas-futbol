@@ -15,6 +15,7 @@ export interface Profile {
   grupo_id: string | null
   es_admin: boolean
   es_dev: boolean
+  apodo_cambiado_at: string | null
   created_at: string
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import {
   fetchEstadisticasJugador, fetchJugadores,
-  subirAvatar, actualizarColor,
+  subirAvatar, actualizarColor, cambiarApodo,
   promoverAdmin, quitarAdmin,
   salirDeGrupo, eliminarGrupo,
   cambiarGrupoActivo, unirseAGrupo,
@@ -23,6 +23,10 @@ export default function Perfil() {
   const [cambiandoColor, setCambiandoColor] = useState(false)
   const [miembros, setMiembros] = useState<Profile[]>([])
   const [gestionando, setGestionando] = useState<string | null>(null)
+  const [editandoApodo, setEditandoApodo] = useState(false)
+  const [nuevoApodo, setNuevoApodo] = useState('')
+  const [cambiandoApodo, setCambiandoApodo] = useState(false)
+  const [errorApodo, setErrorApodo] = useState<string | null>(null)
   const [mostrarUnirse, setMostrarUnirse] = useState(false)
   const [codigoUnirse, setCodigoUnirse] = useState('')
   const [errorUnirse, setErrorUnirse] = useState<string | null>(null)
@@ -62,6 +66,33 @@ export default function Perfil() {
     } finally {
       setSubiendo(false)
       e.target.value = ''
+    }
+  }
+
+  async function handleCambiarApodo(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nuevoApodo.trim() || nuevoApodo.trim() === profile?.apodo) return
+    setCambiandoApodo(true)
+    setErrorApodo(null)
+    try {
+      await cambiarApodo(nuevoApodo.trim())
+      await refreshProfile()
+      setEditandoApodo(false)
+      setNuevoApodo('')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('COOLDOWN:')) {
+        const fecha = new Date(msg.split('COOLDOWN:')[1].trim())
+        setErrorApodo(`Podés volver a cambiar el apodo el ${fecha.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}.`)
+      } else if (msg.includes('APODO_OCUPADO')) {
+        setErrorApodo('Ese apodo ya está en uso. Elegí otro.')
+      } else if (msg.includes('APODO_CORTO')) {
+        setErrorApodo('El apodo tiene que tener al menos 2 caracteres.')
+      } else {
+        setErrorApodo('No se pudo cambiar el apodo. Intentá de nuevo.')
+      }
+    } finally {
+      setCambiandoApodo(false)
     }
   }
 
@@ -207,10 +238,38 @@ export default function Perfil() {
           onChange={handleArchivo}
         />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 700, color: profile.es_dev ? 'var(--color-gold)' : undefined }}>{profile.apodo}</h2>
-          {profile.es_dev && <DevBadge />}
-        </div>
+        {editandoApodo ? (
+          <form onSubmit={handleCambiarApodo} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', marginBottom: '4px', width: '100%', maxWidth: '260px' }}>
+            <input
+              autoFocus
+              type="text"
+              value={nuevoApodo}
+              onChange={(e) => setNuevoApodo(e.target.value)}
+              placeholder={profile.apodo}
+              maxLength={24}
+              style={{ textAlign: 'center', fontSize: '16px' }}
+            />
+            {errorApodo && <p style={{ fontSize: '12px', color: '#E57368', textAlign: 'center' }}>{errorApodo}</p>}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button type="submit" className="btn" disabled={cambiandoApodo} style={{ padding: '6px 16px', fontSize: '13px' }}>
+                {cambiandoApodo ? '...' : 'Guardar'}
+              </button>
+              <button type="button" className="btn-ghost" onClick={() => { setEditandoApodo(false); setErrorApodo(null); setNuevoApodo('') }} style={{ padding: '6px 14px', fontSize: '13px' }}>
+                Cancelar
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <h2 style={{ fontSize: '22px', fontWeight: 700, color: profile.es_dev ? 'var(--color-gold)' : undefined }}>{profile.apodo}</h2>
+            {profile.es_dev && <DevBadge />}
+            <button
+              onClick={() => { setEditandoApodo(true); setNuevoApodo(profile.apodo) }}
+              title="Cambiar apodo"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', opacity: 0.5, padding: '2px 4px' }}
+            >✏️</button>
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{
             width: '12px',

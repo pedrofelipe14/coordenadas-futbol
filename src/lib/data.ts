@@ -481,6 +481,11 @@ export async function quitarAdmin(userId: string): Promise<void> {
   if (error) throw error
 }
 
+export async function cambiarApodo(nuevoApodo: string): Promise<void> {
+  const { error } = await supabase.rpc('cambiar_apodo', { p_nuevo_apodo: nuevoApodo })
+  if (error) throw new Error(error.message)
+}
+
 export async function actualizarColor(userId: string, color: string): Promise<void> {
   const { error } = await supabase
     .from('profiles')
