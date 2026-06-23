@@ -31,11 +31,12 @@ export default function Perfil() {
 
   async function handleCompartir(codigo: string, nombre: string) {
     const url = `${window.location.origin}/grupo?codigo=${codigo}`
+    const texto = `Te invito a unirte a mi grupo "${nombre}" en CoordeFutbol, la app para coordinar los partidos del grupo. Entrá con este link y registrate: ${url}`
     if (navigator.share) {
-      try { await navigator.share({ title: `Unite a ${nombre} en CoordeFutbol`, text: `Te invito a unirte a mi grupo "${nombre}" en CoordeFutbol, la app para coordinar los partidos del grupo. Entrá con este link y registrate:`, url }) }
+      try { await navigator.share({ title: `Unite a ${nombre} en CoordeFutbol`, text: texto, url }) }
       catch { /* cancelado */ }
     } else {
-      await navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(texto)
       setCopiado(codigo)
       setTimeout(() => setCopiado(null), 2000)
     }
