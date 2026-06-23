@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Partido, PartidoCompleto, PartidoDetalle, GolConJugador, PartidoJugadorConPerfil, JugadaEpica, GoleadorStat, Profile, EstadisticasJugador, MensajeConAutor, MembresiaGrupo, PagoPartido } from '../types'
+import type { Partido, PartidoCompleto, PartidoDetalle, GolConJugador, PartidoJugadorConPerfil, JugadaEpica, GoleadorStat, Profile, EstadisticasJugador, MensajeConAutor, MembresiaGrupo, PagoPartido, Invitado } from '../types'
 
 const CODIGO_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
@@ -154,7 +154,7 @@ export async function fetchPartido(id: string): Promise<PartidoDetalle | null> {
 
   if (error || !partido) return null
 
-  const [golesResult, lineupResult, jugadasResult] = await Promise.all([
+  const [golesResult, lineupResult, jugadasResult, invitadosResult] = await Promise.all([
     supabase
       .from('goles')
       .select('*, jugador:profiles(*)')
@@ -169,6 +169,10 @@ export async function fetchPartido(id: string): Promise<PartidoDetalle | null> {
       .select('*, jugador:profiles(*)')
       .eq('partido_id', id)
       .order('minuto', { ascending: true }),
+    supabase
+      .from('partido_invitados')
+      .select('*')
+      .eq('partido_id', id),
   ])
 
   return {
@@ -176,6 +180,7 @@ export async function fetchPartido(id: string): Promise<PartidoDetalle | null> {
     goles: (golesResult.data || []) as GolConJugador[],
     lineup: (lineupResult.data || []) as PartidoJugadorConPerfil[],
     jugadas: (jugadasResult.data || []) as JugadaEpica[],
+    invitados: (invitadosResult.data || []) as Invitado[],
   }
 }
 
@@ -193,6 +198,7 @@ export interface InputArrancarPartido {
   creado_por: string
   grupo_id: string
   lineup: { jugador_id: string; equipo: 'A' | 'B' }[]
+  invitados?: { nombre: string; equipo: 'A' | 'B' }[]
 }
 
 export async function arrancarPartido(input: InputArrancarPartido): Promise<string> {
@@ -234,6 +240,16 @@ export async function arrancarPartido(input: InputArrancarPartido): Promise<stri
         p_costo: input.costo_cancha,
       })
     }
+  }
+
+  if (input.invitados && input.invitados.length > 0) {
+    await supabase.from('partido_invitados').insert(
+      input.invitados.map((inv) => ({
+        partido_id: partido.id,
+        nombre: inv.nombre,
+        equipo: inv.equipo,
+      }))
+    )
   }
 
   return partido.id
