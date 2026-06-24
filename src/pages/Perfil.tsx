@@ -260,23 +260,25 @@ export default function Perfil() {
             </div>
           </form>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <h2 style={{ fontSize: '22px', fontWeight: 700, color: profile.es_dev ? 'var(--color-gold)' : undefined }}>{profile.apodo}</h2>
-            {profile.es_dev && <DevBadge />}
-            <button
-              onClick={() => { setEditandoApodo(true); setNuevoApodo(profile.apodo) }}
-              title="Cambiar apodo"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', opacity: 0.35, display: 'flex', alignItems: 'center' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-            </button>
-          </div>
-          <p style={{ fontSize: '11px', color: 'var(--color-bone-dim)', opacity: 0.5, marginBottom: '4px', textAlign: 'center' }}>
-            Cambiable 1 vez por semana · Nombres únicos
-          </p>
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: 700, color: profile.es_dev ? 'var(--color-gold)' : undefined }}>{profile.apodo}</h2>
+              {profile.es_dev && <DevBadge />}
+              <button
+                onClick={() => { setEditandoApodo(true); setNuevoApodo(profile.apodo) }}
+                title="Cambiar apodo"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', opacity: 0.35, display: 'flex', alignItems: 'center' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+            </div>
+            <p style={{ fontSize: '11px', color: 'var(--color-bone-dim)', opacity: 0.5, marginBottom: '4px', textAlign: 'center' }}>
+              Cambiable 1 vez por semana · Nombres únicos
+            </p>
+          </>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{
