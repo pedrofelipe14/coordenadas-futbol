@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Navigate } from 'react-router-dom'
-import { fetchJugadores, arrancarPartido } from '../lib/data'
+import { useNavigate, Navigate, useSearchParams } from 'react-router-dom'
+import { fetchJugadores, arrancarPartido, fetchConvocatoriaActiva } from '../lib/data'
 import { useAuth } from '../lib/AuthContext'
 import type { Profile } from '../types'
 
@@ -26,6 +26,8 @@ function AvatarJugador({ jugador, size = 32 }: { jugador: Profile; size?: number
 export default function NuevoPartido() {
   const navigate = useNavigate()
   const { profile, esAdmin } = useAuth()
+  const [searchParams] = useSearchParams()
+  const convocatoriaId = searchParams.get('convocatoria')
 
   if (!esAdmin) return <Navigate to="/home" replace />
 
@@ -53,7 +55,28 @@ export default function NuevoPartido() {
   }
 
   useEffect(() => {
-    fetchJugadores().then(setJugadores).catch(() => setError('No se pudo cargar el plantel.'))
+    async function cargar() {
+      try {
+        const todos = await fetchJugadores()
+        setJugadores(todos)
+
+        if (convocatoriaId) {
+          const conv = await fetchConvocatoriaActiva()
+          if (conv && conv.id === convocatoriaId) {
+            const votosIds = new Set(conv.votos.map(v => v.jugador_id))
+            // Pre-seleccionar solo los jugadores que votaron (sin equipo asignado aún)
+            setAsignaciones(new Map(
+              todos
+                .filter(j => votosIds.has(j.id))
+                .map(j => [j.id, 'A' as const])
+            ))
+          }
+        }
+      } catch {
+        setError('No se pudo cargar el plantel.')
+      }
+    }
+    cargar()
   }, [])
 
   function toggleAsignacion(jugadorId: string, equipo: 'A' | 'B') {

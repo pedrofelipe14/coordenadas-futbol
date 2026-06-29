@@ -48,7 +48,7 @@ export default function Header() {
         {/* Nav */}
         <nav className="header-nav" style={{ display: 'flex', flex: 1 }}>
           <NavLink to="/home" end style={linkStyle}>Inicio</NavLink>
-          {esAdmin && <NavLink to="/partido/nuevo" style={linkStyle}>Cargar</NavLink>}
+          <NavLink to="/convocar" style={linkStyle}>Votación</NavLink>
           <NavLink to="/jugadores" style={linkStyle}>Plantel</NavLink>
           <NavLink to="/chat" style={linkStyle}>Pagos</NavLink>
         </nav>

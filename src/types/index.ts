@@ -101,6 +101,19 @@ export interface GoleadorStat {
   partidosJugados: number
 }
 
+export interface Convocatoria {
+  id: string
+  grupo_id: string
+  estado: 'abierta' | 'cerrada'
+  creado_por: string | null
+  created_at: string
+  cerrada_at: string | null
+}
+
+export interface ConvocatoriaConVotos extends Convocatoria {
+  votos: { jugador_id: string; jugador: Profile }[]
+}
+
 export interface Mensaje {
   id: string
   grupo_id: string
