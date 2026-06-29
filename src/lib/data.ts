@@ -224,6 +224,16 @@ export async function arrancarPartido(input: InputArrancarPartido): Promise<stri
 
   if (errPartido) throw errPartido
 
+  if (input.invitados && input.invitados.length > 0) {
+    await supabase.from('partido_invitados').insert(
+      input.invitados.map((inv) => ({
+        partido_id: partido.id,
+        nombre: inv.nombre,
+        equipo: inv.equipo,
+      }))
+    )
+  }
+
   if (input.lineup.length > 0) {
     const { error: errLineup } = await supabase
       .from('partido_jugadores')
@@ -240,16 +250,6 @@ export async function arrancarPartido(input: InputArrancarPartido): Promise<stri
         p_costo: input.costo_cancha,
       })
     }
-  }
-
-  if (input.invitados && input.invitados.length > 0) {
-    await supabase.from('partido_invitados').insert(
-      input.invitados.map((inv) => ({
-        partido_id: partido.id,
-        nombre: inv.nombre,
-        equipo: inv.equipo,
-      }))
-    )
   }
 
   return partido.id
