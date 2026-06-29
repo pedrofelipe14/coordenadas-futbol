@@ -164,7 +164,7 @@ export default function NuevoPartido() {
         {/* Saque inicial */}
         <div className="panel" style={{ padding: '18px 20px', textAlign: 'center' }}>
           <p style={{ fontSize: '17px', color: 'var(--color-lime)', fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-            Siempre saca Sin pechera
+            Siempre saca Con pechera
           </p>
         </div>
 
