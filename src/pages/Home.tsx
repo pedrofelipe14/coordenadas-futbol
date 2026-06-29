@@ -47,7 +47,7 @@ export default function Home() {
   const partidosDelMes = mesActivo ? (porMes.get(mesActivo) || []) : partidos
   const goleadores = useMemo(() => calcularGoleadores(partidosDelMes), [partidosDelMes])
   const totalGoles = partidosDelMes.reduce(
-    (acc, p) => acc + p.goles.reduce((a, g) => a + g.cantidad, 0), 0
+    (acc, p) => acc + (p.estado === 'finalizado' ? p.goles_a + p.goles_b : 0), 0
   )
 
   if (cargando) {
