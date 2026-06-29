@@ -61,9 +61,11 @@ export default function Plantel() {
   const casiAllaPlayers  = jugadores.filter(j => st(j).casiAlla)
   const pechoFrioPlayers = jugadores.filter(j => st(j).pechoFrio)
 
-  const topGoleadores = [...jugadores].sort((a, b) => st(b).stats.goles - st(a).stats.goles)
+  const topGoleadores = [...jugadores]
+    .filter(j => st(j).stats.goles > 0)
+    .sort((a, b) => st(b).stats.goles - st(a).stats.goles)
   const topVictorias  = [...jugadores]
-    .filter(j => st(j).stats.partidosJugados > 0)
+    .filter(j => st(j).stats.partidosGanados > 0)
     .sort((a, b) => {
       const diff = st(b).stats.partidosGanados - st(a).stats.partidosGanados
       return diff !== 0 ? diff : st(a).stats.partidosJugados - st(b).stats.partidosJugados
@@ -166,21 +168,23 @@ export default function Plantel() {
       )}
 
       {/* TOP GOLEADORES */}
-      <div style={{ marginBottom: '40px' }}>
-        <p className="eyebrow" style={{ marginBottom: '12px' }}>Top goleadores</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {topGoleadores.map((j, i) => (
-            <PlayerCard
-              key={j.id}
-              jugador={j}
-              goles={st(j).stats.goles}
-              posicion={i + 1}
-              stats={st(j).stats}
-              racha={st(j).racha}
-            />
-          ))}
+      {topGoleadores.length > 0 && (
+        <div style={{ marginBottom: '40px' }}>
+          <p className="eyebrow" style={{ marginBottom: '12px' }}>Top goleadores</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {topGoleadores.map((j, i) => (
+              <PlayerCard
+                key={j.id}
+                jugador={j}
+                goles={st(j).stats.goles}
+                posicion={i + 1}
+                stats={st(j).stats}
+                racha={st(j).racha}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* TOP VICTORIAS */}
       {topVictorias.length > 0 && (
