@@ -106,8 +106,8 @@ export default function DetallePartido() {
     if (!partido) return
     setErrorCierre(null)
 
-    // Filtramos filas inválidas en vez de bloquear
-    const golesValidos = filasGol.filter((f) => f.jugador_id)
+    // Filtramos filas inválidas y goles de invitados (no cuentan en estadísticas)
+    const golesValidos = filasGol.filter((f) => f.jugador_id && !f.jugador_id.startsWith('inv:'))
     const jugadasValidas = filasJugada.filter((f) => f.descripcion.trim())
 
     setGuardandoCierre(true)
@@ -303,14 +303,27 @@ export default function DetallePartido() {
                     className="fila-gol-jugador"
                     value={fila.jugador_id}
                     onChange={(e) => {
-                      const jugadorId = e.target.value
-                      const equipoAuto = partido.lineup.find((pj) => pj.jugador_id === jugadorId)?.equipo ?? ''
-                      setFilasGol((prev) => prev.map((f, i) => i === idx ? { ...f, jugador_id: jugadorId, equipo: equipoAuto as 'A' | 'B' | '' } : f))
+                      const val = e.target.value
+                      let equipoAuto: 'A' | 'B' | '' = ''
+                      if (val.startsWith('inv:')) {
+                        const invId = val.slice(4)
+                        equipoAuto = partido.invitados.find(i => i.id === invId)?.equipo ?? ''
+                      } else {
+                        equipoAuto = partido.lineup.find((pj) => pj.jugador_id === val)?.equipo ?? ''
+                      }
+                      setFilasGol((prev) => prev.map((f, i) => i === idx ? { ...f, jugador_id: val, equipo: equipoAuto } : f))
                     }}
                     style={{ flex: 2 }}
                   >
                     <option value="">Jugador</option>
                     {jugadores.map((j) => <option key={j.id} value={j.id}>{j.apodo}</option>)}
+                    {partido.invitados.length > 0 && (
+                      <optgroup label="Invitados">
+                        {partido.invitados.map((inv) => (
+                          <option key={inv.id} value={`inv:${inv.id}`}>{inv.nombre}</option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                   <select value={fila.equipo} onChange={(e) => setFilasGol((prev) => prev.map((f, i) => i === idx ? { ...f, equipo: e.target.value as 'A' | 'B' | '' } : f))} style={{ flex: 1 }}>
                     <option value="">Equipo</option>
