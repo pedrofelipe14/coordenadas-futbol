@@ -9,6 +9,7 @@ const MUNDIAL_RACHA = 7
 const emptyStatus = (): StatusJugador => ({
   stats: { goles: 0, partidosJugados: 0, partidosGanados: 0, partidosPerdidos: 0, partidosEmpatados: 0 },
   racha: 0,
+  rachaPerdidas: 0,
   mundiales: 0,
   pechoFrio: false,
   casiAlla: false,
@@ -60,6 +61,9 @@ export default function Plantel() {
   const hallOfFame       = jugadores.filter(j => st(j).mundiales > 0).sort((a, b) => st(b).mundiales - st(a).mundiales)
   const casiAllaPlayers  = jugadores.filter(j => st(j).casiAlla)
   const pechoFrioPlayers = jugadores.filter(j => st(j).pechoFrio)
+  const malaRachaPlayers = jugadores
+    .filter(j => st(j).rachaPerdidas >= 3)
+    .sort((a, b) => st(b).rachaPerdidas - st(a).rachaPerdidas)
 
   const topGoleadores = [...jugadores]
     .filter(j => st(j).stats.goles > 0)
@@ -160,6 +164,25 @@ export default function Plantel() {
                 </p>
                 <p style={{ fontSize: '13px', color: 'var(--color-bone-dim)' }}>
                   Más suerte la próxima.
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* MALA RACHA */}
+      {malaRachaPlayers.length > 0 && (
+        <div style={{ marginBottom: '28px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {malaRachaPlayers.map(j => (
+            <div key={j.id} className="panel" style={{ padding: '14px 16px', borderColor: 'rgba(229,115,104,0.3)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <MiniAvatar jugador={j} />
+              <div>
+                <p style={{ fontSize: '14px', fontWeight: 600, color: '#E57368', marginBottom: '2px' }}>
+                  Mala racha, {j.apodo}
+                </p>
+                <p style={{ fontSize: '13px', color: 'var(--color-bone-dim)' }}>
+                  {st(j).rachaPerdidas} derrotas seguidas. Hay que revertirla.
                 </p>
               </div>
             </div>

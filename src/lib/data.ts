@@ -566,10 +566,11 @@ const NOMBRES_MES = [
 
 export interface StatusJugador {
   stats: EstadisticasJugador
-  racha: number       // victorias consecutivas actuales
-  mundiales: number   // mundiales ganados históricamente
-  pechoFrio: boolean  // perdió cuando estaba a 1 del siguiente mundial
-  casiAlla: boolean   // racha % 7 === 6 → a 1 victoria del próximo mundial
+  racha: number         // victorias consecutivas actuales
+  rachaPerdidas: number // derrotas consecutivas actuales
+  mundiales: number     // mundiales ganados históricamente
+  pechoFrio: boolean    // perdió cuando estaba a 1 del siguiente mundial
+  casiAlla: boolean     // racha % 7 === 6 → a 1 victoria del próximo mundial
 }
 
 export interface DatosPlantel {
@@ -639,16 +640,21 @@ export async function fetchDatosPlantel(): Promise<DatosPlantel> {
     )
 
     let racha = 0
+    let rachaPerdidas = 0
     let mundiales = 0
     let rachaAntesDeUltimaRuptura = 0 // para detectar pecho frío
 
     for (const g of asc) {
       if (g.resultado === 'ganado') {
         racha++
+        rachaPerdidas = 0
         if (racha % MUNDIAL_CICLO === 0) mundiales++
-      } else {
+      } else if (g.resultado === 'perdido') {
         if (racha > 0) rachaAntesDeUltimaRuptura = racha
         racha = 0
+        rachaPerdidas++
+      } else {
+        // empate: no corta racha de victorias ni de derrotas
       }
     }
 
@@ -665,6 +671,7 @@ export async function fetchDatosPlantel(): Promise<DatosPlantel> {
     statusMap.set(id, {
       stats: _stats.get(id) ?? emptyStats(),
       racha,
+      rachaPerdidas,
       mundiales,
       pechoFrio,
       casiAlla,
@@ -674,7 +681,7 @@ export async function fetchDatosPlantel(): Promise<DatosPlantel> {
   // Jugadores que solo tienen goles (sin apariciones en lineup)
   _stats.forEach((stats, id) => {
     if (!statusMap.has(id)) {
-      statusMap.set(id, { stats, racha: 0, mundiales: 0, pechoFrio: false, casiAlla: false })
+      statusMap.set(id, { stats, racha: 0, rachaPerdidas: 0, mundiales: 0, pechoFrio: false, casiAlla: false })
     }
   })
 
