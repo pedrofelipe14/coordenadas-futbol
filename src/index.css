@@ -31,9 +31,11 @@
 html, body {
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
 }
 
 body {
+  -webkit-text-size-adjust: 100%;
   background: var(--color-carbon-deep);
   background-image:
     repeating-linear-gradient(
@@ -76,7 +78,7 @@ a {
 
 button, input, select {
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px; /* 16px mínimo para evitar zoom automático en iOS */
 }
 
 button {
@@ -282,6 +284,8 @@ main:has(.chat-page) {
   background: var(--color-carbon);
   padding: 12px 16px;
   padding-bottom: max(12px, env(safe-area-inset-bottom));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
 }
 
 /* ===================================================
@@ -315,4 +319,10 @@ main:has(.chat-page) {
   /* Filas de gol: jugador ocupa fila completa */
   .fila-gol { flex-wrap: wrap !important; }
   .fila-gol-jugador { flex: 1 1 100% !important; }
+
+  /* Reducir padding horizontal en pantallas chicas */
+  .panel {
+    border-radius: 6px;
+  }
 }
+
