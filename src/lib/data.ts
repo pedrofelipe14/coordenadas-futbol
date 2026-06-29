@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Partido, PartidoCompleto, PartidoDetalle, GolConJugador, PartidoJugadorConPerfil, JugadaEpica, GoleadorStat, Profile, EstadisticasJugador, MensajeConAutor, MembresiaGrupo, PagoPartido, Invitado } from '../types'
+import type { Partido, PartidoCompleto, PartidoDetalle, GolConJugador, PartidoJugadorConPerfil, JugadaEpica, GoleadorStat, Profile, EstadisticasJugador, MensajeConAutor, MembresiaGrupo, PagoPartido, Invitado, ConvocatoriaConVotos } from '../types'
 
 const CODIGO_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
@@ -742,4 +742,66 @@ export async function enviarMensaje(grupoId: string, autorId: string, contenido:
 export function etiquetaMes(key: string): string {
   const [anio, mes] = key.split('-')
   return `${NOMBRES_MES[parseInt(mes, 10) - 1]} ${anio}`
+}
+
+// ----------------------------------------------------------------
+// CONVOCATORIA
+// ----------------------------------------------------------------
+
+export async function fetchConvocatoriaActiva(): Promise<ConvocatoriaConVotos | null> {
+  const { data: conv, error } = await supabase
+    .from('convocatorias')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !conv) return null
+
+  const { data: votos } = await supabase
+    .from('convocatoria_votos')
+    .select('jugador_id, jugador:profiles(id, apodo, dorsal, avatar_color, avatar_url, es_dev, es_admin, grupo_id, created_at, apodo_cambiado_at)')
+    .eq('convocatoria_id', conv.id)
+
+  return {
+    ...conv,
+    votos: (votos ?? []).map((v: { jugador_id: string; jugador: unknown }) => ({
+      jugador_id: v.jugador_id,
+      jugador: (Array.isArray(v.jugador) ? v.jugador[0] : v.jugador) as Profile,
+    })),
+  }
+}
+
+export async function crearConvocatoria(grupoId: string, creadoPor: string): Promise<string> {
+  const { data, error } = await supabase
+    .from('convocatorias')
+    .insert({ grupo_id: grupoId, creado_por: creadoPor, estado: 'abierta' })
+    .select('id')
+    .single()
+  if (error) throw error
+  return data.id
+}
+
+export async function cerrarConvocatoria(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('convocatorias')
+    .update({ estado: 'cerrada', cerrada_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function votarJuego(convocatoriaId: string, jugadorId: string): Promise<void> {
+  const { error } = await supabase
+    .from('convocatoria_votos')
+    .insert({ convocatoria_id: convocatoriaId, jugador_id: jugadorId })
+  if (error) throw error
+}
+
+export async function retirarVoto(convocatoriaId: string, jugadorId: string): Promise<void> {
+  const { error } = await supabase
+    .from('convocatoria_votos')
+    .delete()
+    .eq('convocatoria_id', convocatoriaId)
+    .eq('jugador_id', jugadorId)
+  if (error) throw error
 }

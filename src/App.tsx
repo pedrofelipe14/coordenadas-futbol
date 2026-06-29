@@ -13,6 +13,7 @@ import Chat from './pages/Chat'
 import ResetPassword from './pages/ResetPassword'
 import Legal from './pages/Legal'
 import Privacidad from './pages/Privacidad'
+import Convocatoria from './pages/Convocatoria'
 import AlertaBanner from './components/AlertaBanner'
 
 const Cargando = () => (
@@ -70,6 +71,7 @@ export default function App() {
 
             <Route element={<GrupoLayout />}>
               <Route path="/home" element={<Home />} />
+              <Route path="/convocar" element={<Convocatoria />} />
               <Route path="/partido/nuevo" element={<NuevoPartido />} />
               <Route path="/partido/:id" element={<DetallePartido />} />
               <Route path="/jugadores" element={<Plantel />} />
