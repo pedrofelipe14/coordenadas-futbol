@@ -1,36 +1,40 @@
 # CoordeFutbol
 
+**English** · [Español](README.es.md)
+
 [![CI](https://github.com/pedrofelipe14/coordenadas-futbol/actions/workflows/ci.yml/badge.svg)](https://github.com/pedrofelipe14/coordenadas-futbol/actions/workflows/ci.yml)
 
-App web para **coordinar partidos de fútbol entre grupos de amigos**: convocar a los jugadores, armar los equipos, cargar resultados y estadísticas, y dividir el pago de la cancha.
+A web app for **organizing pickup football (soccer) games among groups of friends**: call players up, pick teams, record results and stats, and split the cost of the pitch.
 
-**App en vivo:** https://coordenadas-futbol.vercel.app
+**Live app:** https://coordenadas-futbol.vercel.app
 
-![Pantalla de inicio de CoordeFutbol](docs/landing.jpg)
+![CoordeFutbol landing page](docs/landing.jpg)
 
-## Funcionalidades
+> The app's interface is in Spanish.
 
-- **Grupos** con código de invitación para compartir (hasta 2 por jugador), con roles de administrador.
-- **Convocatoria semanal** con votación para confirmar quién juega.
-- **Partidos**: equipos, resultado y goles por jugador, incluyendo **jugadores invitados** que no son del grupo.
-- **Estadísticas** individuales por jugador.
-- **Pago de la cancha** dividido en partes iguales, con seguimiento de quién pagó.
-- **Chat del grupo** y **alertas en tiempo real** cuando te suman a un partido.
-- **Perfil** con foto, dorsal, color y apodo.
-- Registro con confirmación por email y recuperación de contraseña.
+## Features
+
+- **Groups** with a shareable invite code (up to 2 per player) and admin roles.
+- **Weekly call-up** where players vote to confirm who's playing.
+- **Matches**: teams, score and goals per player, including **guest players** from outside the group.
+- Individual **player stats**.
+- **Pitch fee** split evenly, tracking who has paid.
+- **Group chat** and **real-time alerts** when you're added to a match.
+- **Profile** with photo, shirt number, color and nickname.
+- Sign-up with email confirmation and password recovery.
 
 ## Stack
 
 - **Frontend:** React 19 + TypeScript + Vite + React Router
 - **Backend:** Supabase (Auth, PostgreSQL, Storage, Realtime)
-- **Tests y CI:** Vitest · GitHub Actions
+- **Tests & CI:** Vitest · GitHub Actions
 - **Deploy:** Vercel
 
-## Correr localmente
+## Running locally
 
 ```bash
 npm install
-cp .env.example .env   # completar VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY
+cp .env.example .env   # fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
 npm run dev
 ```
 
@@ -40,17 +44,17 @@ npm run dev
 npm test
 ```
 
-Tests unitarios con **Vitest** sobre la lógica de estadísticas (tabla de goleadores, agrupación por mes). En cada push, **GitHub Actions** corre lint, tests y build.
+**Vitest** unit tests cover the stats logic (top-scorer table, grouping by month). On every push, **GitHub Actions** runs lint, tests and the build.
 
-### Base de datos
+### Database
 
-En el SQL Editor de Supabase, ejecutar `supabase/schema.sql` y después los `supabase/migracion_*.sql`.
+In the Supabase SQL Editor, run `supabase/schema.sql` and then the `supabase/migracion_*.sql` files.
 
-En el dashboard de Supabase:
-- **Authentication → Email:** activar *Confirm email*.
-- **Authentication → SMTP:** configurar un proveedor de mail.
-- **Authentication → URL Configuration:** Site URL y Redirect URLs.
+In the Supabase dashboard:
+- **Authentication → Email:** enable *Confirm email*.
+- **Authentication → SMTP:** set up an email provider.
+- **Authentication → URL Configuration:** Site URL and Redirect URLs.
 
-## Autor
+## Author
 
 [@pedrofelipe14](https://github.com/pedrofelipe14)
