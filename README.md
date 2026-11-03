@@ -4,6 +4,8 @@ App web para **coordinar partidos de fútbol entre grupos de amigos**: convocar 
 
 **App en vivo:** https://coordenadas-futbol.vercel.app
 
+![Pantalla de inicio de CoordeFutbol](docs/landing.jpg)
+
 ## Funcionalidades
 
 - **Grupos** con código de invitación para compartir (hasta 2 por jugador), con roles de administrador.
