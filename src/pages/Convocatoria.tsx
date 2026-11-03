@@ -17,14 +17,20 @@ export default function Convocatoria() {
   const [cargando, setCargando] = useState(true)
   const [accionando, setAccionando] = useState(false)
 
-  useEffect(() => { cargar() }, [])
-
   async function cargar() {
     setCargando(true)
     const data = await fetchConvocatoriaActiva()
     setConv(data)
     setCargando(false)
   }
+
+  // Al montar, cargando ya arranca en true: solo hace falta traer los datos.
+  useEffect(() => {
+    fetchConvocatoriaActiva().then((data) => {
+      setConv(data)
+      setCargando(false)
+    })
+  }, [])
 
   async function handleAbrir() {
     if (!profile) return

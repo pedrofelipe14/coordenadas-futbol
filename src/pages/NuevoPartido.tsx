@@ -23,13 +23,19 @@ function AvatarJugador({ jugador, size = 32 }: { jugador: Profile; size?: number
   )
 }
 
+// El chequeo de admin va en un componente aparte: cortar con un return antes de los hooks
+// del formulario cambiaría cuántos hooks corren cuando esAdmin cambia (p. ej. al cargar el perfil).
 export default function NuevoPartido() {
+  const { esAdmin } = useAuth()
+  if (!esAdmin) return <Navigate to="/home" replace />
+  return <FormularioPartido />
+}
+
+function FormularioPartido() {
   const navigate = useNavigate()
-  const { profile, esAdmin } = useAuth()
+  const { profile } = useAuth()
   const [searchParams] = useSearchParams()
   const convocatoriaId = searchParams.get('convocatoria')
-
-  if (!esAdmin) return <Navigate to="/home" replace />
 
   const [jugadores, setJugadores] = useState<Profile[]>([])
   const [lugar, setLugar] = useState('')

@@ -1,5 +1,7 @@
 # CoordeFutbol
 
+[![CI](https://github.com/pedrofelipe14/coordenadas-futbol/actions/workflows/ci.yml/badge.svg)](https://github.com/pedrofelipe14/coordenadas-futbol/actions/workflows/ci.yml)
+
 App web para **coordinar partidos de fútbol entre grupos de amigos**: convocar a los jugadores, armar los equipos, cargar resultados y estadísticas, y dividir el pago de la cancha.
 
 **App en vivo:** https://coordenadas-futbol.vercel.app
@@ -21,6 +23,7 @@ App web para **coordinar partidos de fútbol entre grupos de amigos**: convocar 
 
 - **Frontend:** React 19 + TypeScript + Vite + React Router
 - **Backend:** Supabase (Auth, PostgreSQL, Storage, Realtime)
+- **Tests y CI:** Vitest · GitHub Actions
 - **Deploy:** Vercel
 
 ## Correr localmente
@@ -30,6 +33,14 @@ npm install
 cp .env.example .env   # completar VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY
 npm run dev
 ```
+
+### Tests
+
+```bash
+npm test
+```
+
+Tests unitarios con **Vitest** sobre la lógica de estadísticas (tabla de goleadores, agrupación por mes). En cada push, **GitHub Actions** corre lint, tests y build.
 
 ### Base de datos
 
